@@ -1,83 +1,43 @@
-import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'homepage.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class LoginPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
-    );
-  }
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-
-  @override
-  _LoginScreenState createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  // Controller untuk input fields
+class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // Dummy username dan password yang benar
-  final String correctUsername = 'tahta';
-  final String correctPassword = '123';
+  Future<void> _login() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('user')
+          .select('id, username')
+          .eq('username', _usernameController.text.trim())
+          .eq('password', _passwordController.text.trim())
+          .maybeSingle();
 
-  // Kunci enkripsi
-  final String encryptionKey = '1234567890123456';
-
-  // Fungsi untuk mengenkripsi password
-  String encryptPassword(String password) {
-    final key = encrypt.Key.fromUtf8(encryptionKey);
-    final iv = encrypt.IV.fromLength(16);
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    return encrypter.encrypt(password, iv: iv).base64;
-  }
-
-  // Fungsi untuk mendekripsi password
-  String decryptPassword(String encryptedPassword) {
-    final key = encrypt.Key.fromUtf8(encryptionKey);
-    final iv = encrypt.IV.fromLength(16);
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    return encrypter.decrypt64(encryptedPassword, iv: iv);
-  }
-
-  // Fungsi untuk validasi login
-  void _validateLogin() {
-    String username = _usernameController.text;
-    String password = _passwordController.text;
-
-    if (username == correctUsername && password == correctPassword) {
-      // Jika login berhasil, tampilkan hasil enkripsi
-      String encryptedPass = encryptPassword(password);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ResultScreen(
-            username: username,
-            password: password,
-            encryptedPassword: encryptedPass,
-            decryptedPassword: decryptPassword(encryptedPass),
+      if (response != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(
+              userId: response['id'],
+              username: response['username'],
+            ),
           ),
-        ),
-      );
-    } else {
-      // Jika login gagal, tampilkan error
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Username atau password salah')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Username atau Password salah!'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Terjadi kesalahan')),
       );
     }
   }
@@ -85,94 +45,101 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _validateLogin,
-              child: const Text('Login'),
-            ),
-          ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF4285F4),
+              Color(0xFF1a237e),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-}
-
-class ResultScreen extends StatelessWidget {
-  final String username;
-  final String password;
-  final String encryptedPassword;
-  final String decryptedPassword;
-
-  const ResultScreen({
-    super.key,
-    required this.username,
-    required this.password,
-    required this.encryptedPassword,
-    required this.decryptedPassword,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hasil Enkripsi'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Username: $username',
-              style: const TextStyle(fontSize: 20),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(30),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.login_rounded,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Welcome Back!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 40),
+                  TextField(
+                    controller: _usernameController,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Username',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white38),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white38),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 40),
+                  Container(
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: _login,
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold, // Changed to bold
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFFF5252),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.3),
+                        minimumSize: Size(120, 45),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Original Password: $password',
-              style: const TextStyle(fontSize: 20),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Encrypted Password: $encryptedPassword',
-              style: const TextStyle(fontSize: 20),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Decrypted Password: $decryptedPassword',
-              style: const TextStyle(fontSize: 20),
-            ),
-          ],
+          ),
         ),
       ),
     );
