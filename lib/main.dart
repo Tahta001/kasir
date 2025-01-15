@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'customer.dart';
 
 Future<void> main() async {
   await Supabase.initialize(

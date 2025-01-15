@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'homepage.dart';
+import 'customer.dart';
 
 class LoginPage extends StatefulWidget {
+  //nama class nya LoginPage
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -10,6 +12,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   Future<void> _login() async {
     try {
@@ -97,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(height: 20),
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: !_isPasswordVisible,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -109,6 +112,19 @@ class _LoginPageState extends State<LoginPage> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: Colors.white),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.white70,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
                       ),
                     ),
                   ),
@@ -122,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
-                          fontWeight: FontWeight.bold, // Changed to bold
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
