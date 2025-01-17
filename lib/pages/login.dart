@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pl2_kasir/pages/homepage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'homepage.dart';
-import 'customer.dart';
 
 class LoginPage extends StatefulWidget {
-  //nama class nya LoginPage
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -16,31 +14,41 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     try {
+      // Mengubah query untuk mengambil role
       final response = await Supabase.instance.client
           .from('user')
-          .select('id, username')
+          .select('id, username, role') // Menambahkan role ke select
           .eq('username', _usernameController.text.trim())
           .eq('password', _passwordController.text.trim())
           .maybeSingle();
 
       if (response != null) {
+        // Jika login berhasil, arahkan ke HomePage dengan role yang sesuai
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => HomePage(
               userId: response['id'],
               username: response['username'],
+              userRole: response['role'] ??
+                  'pelanggan', // Default ke pelanggan jika role null
             ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Username atau password salah')),
+          const SnackBar(
+            content: Text('Username atau password salah'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan')),
+        const SnackBar(
+          content: Text('Terjadi kesalahan saat login'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
