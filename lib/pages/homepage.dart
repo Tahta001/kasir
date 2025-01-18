@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login.dart';
-import 'create_produk.dart'; // Pastikan halaman Create/Edit Produk sudah ada
+import 'create_produk.dart';
 
 class HomePage extends StatefulWidget {
   final int userId;
@@ -30,7 +30,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _currentRole = widget.userRole; // Role default sesuai login awal
+    _currentRole = widget.userRole;
     _fetchProducts();
   }
 
@@ -50,14 +50,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// Fungsi untuk mengganti role
   void _switchRole(String role) {
     setState(() {
-      _currentRole = role; // Role baru akan diaktifkan
+      _currentRole = role;
     });
   }
 
-  /// Widget switcher (khusus admin)
   Widget _buildRoleSwitcher() {
     return widget.userRole == 'admin'
         ? PopupMenuButton<String>(
@@ -75,7 +73,6 @@ class _HomePageState extends State<HomePage> {
         : Container();
   }
 
-  /// Filter produk berdasarkan pencarian
   void _filterProducts(String query) {
     setState(() {
       _searchQuery = query;
@@ -91,7 +88,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  /// List produk untuk admin dan pegawai
   Widget _buildProductList({required bool isEditable}) {
     return ListView.builder(
       itemCount: _filteredProducts.length,
@@ -129,14 +125,13 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   )
-                : null, // Tidak ada tombol untuk pegawai
+                : null,
           ),
         );
       },
     );
   }
 
-  /// Isi konten sesuai role aktif
   Widget _buildContent() {
     if (_currentRole == 'admin') {
       return Column(
@@ -180,8 +175,7 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _buildProductList(
-                    isEditable: false), // Pegawai tidak bisa edit
+                : _buildProductList(isEditable: false),
           ),
         ],
       );
@@ -213,7 +207,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// List produk untuk pelanggan
   Widget _buildProductListPelanggan() {
     return ListView.builder(
       itemCount: _filteredProducts.length,
@@ -257,7 +250,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Hapus produk (admin)
   Future<void> _deleteProduct(int id) async {
     await Supabase.instance.client.from('produk').delete().eq('id', id);
     setState(() {
@@ -279,23 +271,7 @@ class _HomePageState extends State<HomePage> {
                   : 'Pelanggan Dashboard',
         ),
         actions: [
-          if (_currentRole == 'admin') // Tombol tambah produk hanya untuk admin
-            IconButton(
-              icon: const Icon(Icons.add, color: Colors.white),
-              onPressed: () {
-                // Navigasi ke halaman CreateProdukPage
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductPage(
-                      productId: null,
-                    ),
-                  ),
-                ).then(
-                    (_) => _fetchProducts()); // Perbarui produk setelah kembali
-              },
-            ),
-          _buildRoleSwitcher(), // Role switcher hanya untuk admin
+          _buildRoleSwitcher(),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -308,6 +284,23 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: _buildContent(),
+      // Menambahkan Floating Action Button untuk admin
+      floatingActionButton: _currentRole == 'admin'
+          ? FloatingActionButton(
+              backgroundColor: const Color.fromARGB(255, 94, 120, 236),
+              child: const Icon(Icons.add),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductPage(
+                      productId: null,
+                    ),
+                  ),
+                ).then((_) => _fetchProducts());
+              },
+            )
+          : null,
       bottomNavigationBar: _currentRole == 'admin' ||
               _currentRole == 'pegawai' ||
               _currentRole == 'pelanggan'
