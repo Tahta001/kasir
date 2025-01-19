@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pl2_kasir/pages/create_produk.dart';
+import 'package:pl2_kasir/pages/login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'login.dart';
-import 'create_produk.dart';
 
 class HomePage extends StatefulWidget {
   final int userId;
@@ -116,12 +116,12 @@ class _HomePageState extends State<HomePage> {
                               builder: (context) =>
                                   ProductPage(productId: product['id']),
                             ),
-                          );
+                          ).then((_) => _fetchProducts()); // Refresh after edit
                         },
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteProduct(product['id']),
+                        onPressed: () => _showDeleteConfirmation(product['id']),
                       ),
                     ],
                   )
@@ -132,8 +132,33 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _showDeleteConfirmation(int id) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Hapus'),
+          content: const Text('Apakah Anda yakin ingin menghapus produk ini?'),
+          actions: [
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Hapus'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteProduct(id);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildContent() {
-    if (_currentRole == 'admin') {
+    if (_currentRole == 'admin' || _currentRole == 'pegawai') {
       return Column(
         children: [
           Padding(
@@ -153,29 +178,6 @@ class _HomePageState extends State<HomePage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _buildProductList(isEditable: true),
-          ),
-        ],
-      );
-    } else if (_currentRole == 'pegawai') {
-      return Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              onChanged: _filterProducts,
-              decoration: InputDecoration(
-                labelText: 'Cari produk...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _buildProductList(isEditable: false),
           ),
         ],
       );
@@ -251,11 +253,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _deleteProduct(int id) async {
-    await Supabase.instance.client.from('produk').delete().eq('id', id);
-    setState(() {
-      _products.removeWhere((product) => product['id'] == id);
-      _filteredProducts = _products;
-    });
+    try {
+      await Supabase.instance.client.from('produk').delete().eq('id', id);
+      setState(() {
+        _products.removeWhere((product) => product['id'] == id);
+        _filteredProducts = _products;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Produk berhasil dihapus')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error menghapus produk: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -284,60 +299,69 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: _buildContent(),
-      // Menambahkan Floating Action Button untuk admin
-      floatingActionButton: _currentRole == 'admin'
-          ? FloatingActionButton(
-              backgroundColor: const Color.fromARGB(255, 94, 120, 236),
-              child: const Icon(Icons.add),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductPage(
-                      productId: null,
+      floatingActionButton:
+          (_currentRole == 'admin' || _currentRole == 'pegawai')
+              ? FloatingActionButton(
+                  backgroundColor: const Color.fromARGB(255, 94, 120, 236),
+                  child: const Icon(Icons.add),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductPage(productId: null),
+                      ),
+                    ).then((_) => _fetchProducts());
+                  },
+                )
+              : null,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: _currentRole == 'pelanggan'
+            ? const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.shopping_cart),
+                  label: 'Keranjang',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.account_circle),
+                  label: 'Profil',
+                ),
+              ]
+            : _currentRole == 'admin'
+                ? const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home),
+                      label: 'Home',
                     ),
-                  ),
-                ).then((_) => _fetchProducts());
-              },
-            )
-          : null,
-      bottomNavigationBar: _currentRole == 'admin' ||
-              _currentRole == 'pegawai' ||
-              _currentRole == 'pelanggan'
-          ? BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (index) => setState(() => _currentIndex = index),
-              items: _currentRole == 'pelanggan'
-                  ? const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: 'Home',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.shopping_cart),
-                        label: 'Keranjang',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.account_circle),
-                        label: 'Profil',
-                      ),
-                    ]
-                  : const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: 'Home',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.settings),
-                        label: 'Settings',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.people),
-                        label: 'Pegawai',
-                      ),
-                    ],
-            )
-          : null,
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.people),
+                      label: 'Users',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.settings),
+                      label: 'Settings',
+                    ),
+                  ]
+                : const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home),
+                      label: 'Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.settings),
+                      label: 'Settings',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.people),
+                      label: 'User',
+                    ),
+                  ],
+      ),
     );
   }
 }

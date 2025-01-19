@@ -13,29 +13,54 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
 
   Future<void> _login() async {
+    // Validasi input terlebih dahulu
+    if (_usernameController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Username dan password tidak boleh kosong'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     try {
-      // Mengubah query untuk mengambil role
+      // Query ke Supabase untuk login
       final response = await Supabase.instance.client
           .from('user')
-          .select('id, username, role') // Menambahkan role ke select
+          .select('id, username, role') // Memastikan mendapatkan role
           .eq('username', _usernameController.text.trim())
           .eq('password', _passwordController.text.trim())
           .maybeSingle();
 
       if (response != null) {
-        // Jika login berhasil, arahkan ke HomePage dengan role yang sesuai
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(
-              userId: response['id'],
-              username: response['username'],
-              userRole: response['role'] ??
-                  'pelanggan', // Default ke pelanggan jika role null
+        final userId = response['id'];
+        final username = response['username'];
+        final userRole = response['role'];
+
+        if (userRole != null) {
+          // Jika role valid, navigasikan ke HomePage sesuai role
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(
+                userId: userId,
+                username: username,
+                userRole: userRole,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Role pengguna tidak valid.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } else {
+        // Jika username/password salah
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Username atau password salah'),
@@ -44,6 +69,8 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } catch (e) {
+      // Tangani error dengan log untuk debugging
+      print('Error saat login: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Terjadi kesalahan saat login'),
@@ -57,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -70,17 +97,17 @@ class _LoginPageState extends State<LoginPage> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(30),
+              padding: const EdgeInsets.all(30),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.login_rounded,
                     size: 40,
                     color: Colors.white,
                   ),
-                  SizedBox(height: 20),
-                  Text(
+                  const SizedBox(height: 20),
+                  const Text(
                     'Welcome Back!',
                     style: TextStyle(
                       color: Colors.white,
@@ -88,38 +115,38 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 40),
+                  const SizedBox(height: 40),
                   TextField(
                     controller: _usernameController,
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Username',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: const TextStyle(color: Colors.white70),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.white38),
+                        borderSide: const BorderSide(color: Colors.white38),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.white),
+                        borderSide: const BorderSide(color: Colors.white),
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: const TextStyle(color: Colors.white70),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.white38),
+                        borderSide: const BorderSide(color: Colors.white38),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.white),
+                        borderSide: const BorderSide(color: Colors.white),
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -136,27 +163,27 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 40),
-                  Container(
+                  const SizedBox(height: 40),
+                  SizedBox(
                     height: 45,
                     child: ElevatedButton(
                       onPressed: _login,
-                      child: Text(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF5252),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.3),
+                        minimumSize: const Size(120, 45),
+                      ),
+                      child: const Text(
                         'Login',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFFF5252),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.3),
-                        minimumSize: Size(120, 45),
                       ),
                     ),
                   ),
