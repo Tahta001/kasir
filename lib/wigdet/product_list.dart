@@ -1,77 +1,103 @@
+//digunakan unutk menampilkan produk dihalaman admin dan pegawai
 import 'package:flutter/material.dart';
+import 'package:pl2_kasir/pages/create_produk.dart';
 
 class ProductList extends StatelessWidget {
   final List<Map<String, dynamic>> products;
-  final String currentRole;
+  final bool isEditable;
   final Function(int) onDelete;
-  final Function(int) onEdit;
-  final Function(int) onAddToCart;
-  final Function(int) onBuyNow;
+  final Function() onRefresh;
 
   const ProductList({
-    Key? key,
+    super.key,
     required this.products,
-    required this.currentRole,
+    required this.isEditable,
     required this.onDelete,
-    required this.onEdit,
-    required this.onAddToCart,
-    required this.onBuyNow,
-  }) : super(key: key);
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      padding: const EdgeInsets.all(8.0),
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
         return Card(
+          elevation: 2,
+          margin: const EdgeInsets.symmetric(vertical: 4.0),
           child: ListTile(
-            title: Text(product['namaproduk'] ?? 'Nama tidak tersedia'),
+            contentPadding: const EdgeInsets.all(16.0),
+            title: Text(
+              product['namaproduk'] ?? 'Nama tidak tersedia',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Harga: Rp ${product['harga']}'),
-                Text('Stok: ${product['stok']}'),
+                const SizedBox(height: 8),
+                Text(
+                  'Harga: Rp ${product['harga']}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                Text(
+                  'Stok: ${product['stok']}',
+                  style: const TextStyle(fontSize: 14),
+                ),
               ],
             ),
-            trailing: _buildTrailingWidget(context, product),
+            trailing: isEditable
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ProductPage(productId: product['id']),
+                            ),
+                          ).then((_) => onRefresh());
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () =>
+                            _showDeleteConfirmation(context, product['id']),
+                      ),
+                    ],
+                  )
+                : null,
           ),
         );
       },
     );
   }
 
-  Widget _buildTrailingWidget(
-      BuildContext context, Map<String, dynamic> product) {
-    if (currentRole == 'admin') {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.blue),
-            onPressed: () => onEdit(product['id']),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () => onDelete(product['id']),
-          ),
-        ],
-      );
-    } else if (currentRole == 'pelanggan') {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.add_shopping_cart),
-            onPressed: () => onAddToCart(product['id']),
-          ),
-          IconButton(
-            icon: const Icon(Icons.shopping_bag),
-            onPressed: () => onBuyNow(product['id']),
-          ),
-        ],
-      );
-    }
-    return Container(); // For pegawai role, no trailing widgets
+  Future<void> _showDeleteConfirmation(BuildContext context, int id) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Hapus'),
+          content: const Text('Apakah Anda yakin ingin menghapus produk ini?'),
+          actions: [
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Hapus'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                onDelete(id);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

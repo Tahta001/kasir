@@ -1,12 +1,12 @@
+//digunakan untuk mengatur navigasi halaman sesuai role
 import 'package:flutter/material.dart';
 
-
-class BottomNav extends StatelessWidget {
+class CustomBottomNav extends StatelessWidget {
   final String currentRole;
   final int currentIndex;
   final Function(int) onTap;
 
-  const BottomNav({
+  const CustomBottomNav({
     Key? key,
     required this.currentRole,
     required this.currentIndex,
@@ -15,59 +15,56 @@ class BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (currentRole != 'admin' &&
-        currentRole != 'pegawai' &&
-        currentRole != 'pelanggan') {
-      return Container();
-    }
-
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-      items: currentRole == 'pelanggan' // navigasi halaman pelanggan
-          ? const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart),
-                label: 'Keranjang',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Profil',
-              ),
-            ]
-          : currentRole == 'admin' //navigasi halaman admin
-              ? const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
-                    label: 'Home',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.people),
-                    label: 'Users',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.settings),
-                    label: 'Settings',
-                  ),
-                ]
-              : const [ //navigasi halaman pegawai
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
-                    label: 'Home',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.work),
-                    label: 'Tasks',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
-                    label: 'Profile',
-                  ),
-                ],
+      items: _getNavItems(),
     );
+  }
+
+  List<BottomNavigationBarItem> _getNavItems() {
+    if (currentRole == 'pelanggan') {
+      return const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.shopping_cart),
+          label: 'Keranjang',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.account_circle),
+          label: 'Profil',
+        ),
+      ];
+    } else if (currentRole == 'admin') {
+      return const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.people),
+          label: 'Users',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.settings),
+          label: 'Settings',
+        ),
+      ];
+    } else {
+      //untuk pegawai
+      return const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.people),
+          label: 'User',
+        ),
+      ];
+    }
   }
 }

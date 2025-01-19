@@ -1,7 +1,7 @@
+//digunakan unutun membuat dan edit produk (CRUD)
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Widget utama untuk halaman produk
 class ProductPage extends StatefulWidget {
   const ProductPage({Key? key, required productId}) : super(key: key);
 
@@ -12,13 +12,18 @@ class ProductPage extends StatefulWidget {
 // State untuk halaman produk, mengatur logika aplikasi
 class _ProductPageState extends State<ProductPage> {
   final _formKey = GlobalKey<FormState>(); // Kunci untuk validasi form
-  final TextEditingController _nameController = TextEditingController(); // Kontroler untuk input nama produk
-  final TextEditingController _priceController = TextEditingController(); // Kontroler untuk input harga
-  final TextEditingController _stockController = TextEditingController(); // Kontroler untuk input stok
-  final TextEditingController _searchController = TextEditingController(); // Kontroler untuk pencarian produk
+  final TextEditingController _nameController =
+      TextEditingController(); // Kontroler untuk input nama produk
+  final TextEditingController _priceController =
+      TextEditingController(); // Kontroler untuk input harga
+  final TextEditingController _stockController =
+      TextEditingController(); // Kontroler untuk input stok
+  final TextEditingController _searchController =
+      TextEditingController(); // Kontroler untuk pencarian produk
 
   List<Map<String, dynamic>> _products = []; // Daftar semua produk
-  List<Map<String, dynamic>> _filteredProducts = []; // Daftar produk yang difilter berdasarkan pencarian
+  List<Map<String, dynamic>> _filteredProducts =
+      []; // Daftar produk yang difilter berdasarkan pencarian
   int? _editingProductId; // Menyimpan ID produk yang sedang diedit
   bool _isLoading = false; // Indikator untuk proses loading
 
@@ -26,7 +31,8 @@ class _ProductPageState extends State<ProductPage> {
   void initState() {
     super.initState();
     _fetchProducts(); // Memuat data produk saat pertama kali widget dibangun
-    _searchController.addListener(_filterProducts); // Mendengarkan perubahan pada input pencarian
+    _searchController.addListener(
+        _filterProducts); // Mendengarkan perubahan pada input pencarian
   }
 
   @override
@@ -52,12 +58,16 @@ class _ProductPageState extends State<ProductPage> {
           .order('id', ascending: true);
 
       setState(() {
-        _products = List<Map<String, dynamic>>.from(response); // Menyimpan data produk
-        _filteredProducts = _products; // Menyimpan data produk untuk daftar yang difilter
+        _products =
+            List<Map<String, dynamic>>.from(response); // Menyimpan data produk
+        _filteredProducts =
+            _products; // Menyimpan data produk untuk daftar yang difilter
       });
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error mengambil data: ${error.toString()}')), // Menampilkan pesan kesalahan
+        SnackBar(
+            content: Text(
+                'Error mengambil data: ${error.toString()}')), // Menampilkan pesan kesalahan
       );
     } finally {
       setState(() {
@@ -68,18 +78,21 @@ class _ProductPageState extends State<ProductPage> {
 
   // Memfilter produk berdasarkan input pencarian
   void _filterProducts() {
-    final query = _searchController.text.toLowerCase(); // Mendapatkan teks pencarian dalam huruf kecil
+    final query = _searchController.text
+        .toLowerCase(); // Mendapatkan teks pencarian dalam huruf kecil
     setState(() {
       _filteredProducts = _products
-          .where(
-              (product) => product['namaproduk'].toLowerCase().contains(query)) // Menyaring produk berdasarkan nama
+          .where((product) => product['namaproduk']
+              .toLowerCase()
+              .contains(query)) // Menyaring produk berdasarkan nama
           .toList();
     });
   }
 
   // Menambahkan atau memperbarui produk
   Future<void> _addOrUpdateProduct() async {
-    if (!_formKey.currentState!.validate()) return; // Memvalidasi form sebelum melanjutkan
+    if (!_formKey.currentState!.validate())
+      return; // Memvalidasi form sebelum melanjutkan
 
     try {
       setState(() {
@@ -87,8 +100,10 @@ class _ProductPageState extends State<ProductPage> {
       });
 
       final name = _nameController.text; // Mengambil nilai nama produk
-      final price = double.parse(_priceController.text); // Mengambil nilai harga produk
-      final stock = int.parse(_stockController.text); // Mengambil nilai stok produk
+      final price =
+          double.parse(_priceController.text); // Mengambil nilai harga produk
+      final stock =
+          int.parse(_stockController.text); // Mengambil nilai stok produk
 
       if (_editingProductId == null) {
         // Jika tidak ada ID yang sedang diedit, tambahkan produk baru
@@ -109,7 +124,9 @@ class _ProductPageState extends State<ProductPage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Produk berhasil ditambahkan')), // Menampilkan pesan sukses
+          const SnackBar(
+              content: Text(
+                  'Produk berhasil ditambahkan')), // Menampilkan pesan sukses
         );
       } else {
         // Jika ada ID yang sedang diedit, perbarui produk yang ada
@@ -120,7 +137,9 @@ class _ProductPageState extends State<ProductPage> {
         }).eq('id', _editingProductId as Object);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Produk berhasil diupdate')), // Menampilkan pesan sukses
+          const SnackBar(
+              content:
+                  Text('Produk berhasil diupdate')), // Menampilkan pesan sukses
         );
       }
 
@@ -128,7 +147,9 @@ class _ProductPageState extends State<ProductPage> {
       await _fetchProducts(); // Memuat ulang daftar produk
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${error.toString()}')), // Menampilkan pesan kesalahan
+        SnackBar(
+            content: Text(
+                'Error: ${error.toString()}')), // Menampilkan pesan kesalahan
       );
     } finally {
       setState(() {
@@ -144,16 +165,23 @@ class _ProductPageState extends State<ProductPage> {
         _isLoading = true; // Mengatur indikator loading menjadi true
       });
 
-      await Supabase.instance.client.from('produk').delete().eq('id', id); // Menghapus produk berdasarkan ID
+      await Supabase.instance.client
+          .from('produk')
+          .delete()
+          .eq('id', id); // Menghapus produk berdasarkan ID
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Produk berhasil dihapus')), // Menampilkan pesan sukses
+        const SnackBar(
+            content:
+                Text('Produk berhasil dihapus')), // Menampilkan pesan sukses
       );
 
       await _fetchProducts(); // Memuat ulang daftar produk
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error menghapus produk: ${error.toString()}')), // Menampilkan pesan kesalahan
+        SnackBar(
+            content: Text(
+                'Error menghapus produk: ${error.toString()}')), // Menampilkan pesan kesalahan
       );
     } finally {
       setState(() {
@@ -165,9 +193,11 @@ class _ProductPageState extends State<ProductPage> {
   // Mengisi form dengan data produk yang sedang diedit
   void _editProduct(Map<String, dynamic> product) {
     setState(() {
-      _editingProductId = product['id']; // Menyimpan ID produk yang sedang diedit
+      _editingProductId =
+          product['id']; // Menyimpan ID produk yang sedang diedit
       _nameController.text = product['namaproduk']; // Mengisi nama produk
-      _priceController.text = product['harga'].toString(); // Mengisi harga produk
+      _priceController.text =
+          product['harga'].toString(); // Mengisi harga produk
       _stockController.text = product['stok'].toString(); // Mengisi stok produk
     });
   }
@@ -189,14 +219,17 @@ class _ProductPageState extends State<ProductPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Konfirmasi Hapus'), // Judul dialog
-          content: const Text('Apakah Anda yakin ingin menghapus produk ini?'), // Isi dialog
+          content: const Text(
+              'Apakah Anda yakin ingin menghapus produk ini?'), // Isi dialog
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // Membatalkan aksi
+              onPressed: () =>
+                  Navigator.of(context).pop(false), // Membatalkan aksi
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true), // Menghapus produk
+              onPressed: () =>
+                  Navigator.of(context).pop(true), // Menghapus produk
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
               ),
@@ -286,7 +319,9 @@ class _ProductPageState extends State<ProductPage> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _addOrUpdateProduct, // Tambah atau update produk
+                          onPressed: _isLoading
+                              ? null
+                              : _addOrUpdateProduct, // Tambah atau update produk
                           child: _isLoading
                               ? const SizedBox(
                                   width: 20,
@@ -330,22 +365,27 @@ class _ProductPageState extends State<ProductPage> {
             Expanded(
               child: _isLoading
                   ? const Center(
-                      child: CircularProgressIndicator(), // Menampilkan indikator loading
+                      child:
+                          CircularProgressIndicator(), // Menampilkan indikator loading
                     )
                   : _filteredProducts.isEmpty
                       ? const Center(
-                          child: Text('Tidak ada produk'), // Menampilkan pesan jika tidak ada produk
+                          child: Text(
+                              'Tidak ada produk'), // Menampilkan pesan jika tidak ada produk
                         )
                       : ListView.builder(
                           itemCount: _filteredProducts.length, // Jumlah produk
                           itemBuilder: (context, index) {
-                            final product = _filteredProducts[index]; // Produk yang sedang ditampilkan
+                            final product = _filteredProducts[
+                                index]; // Produk yang sedang ditampilkan
                             return Card(
                               elevation: 2, // Bayangan pada card
-                              margin: const EdgeInsets.only(bottom: 8), // Margin antar card
+                              margin: const EdgeInsets.only(
+                                  bottom: 8), // Margin antar card
                               child: ListTile(
                                 title: Text(
-                                  product['namaproduk'], // Menampilkan nama produk
+                                  product[
+                                      'namaproduk'], // Menampilkan nama produk
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold),
                                 ),
@@ -356,14 +396,17 @@ class _ProductPageState extends State<ProductPage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit), // Tombol edit
-                                      onPressed: () => _editProduct(product), // Aksi edit produk
+                                      icon:
+                                          const Icon(Icons.edit), // Tombol edit
+                                      onPressed: () => _editProduct(
+                                          product), // Aksi edit produk
                                       tooltip: 'Edit',
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete), // Tombol hapus
-                                      onPressed: () =>
-                                          _confirmDelete(product['id']), // Aksi hapus produk
+                                      icon: const Icon(
+                                          Icons.delete), // Tombol hapus
+                                      onPressed: () => _confirmDelete(
+                                          product['id']), // Aksi hapus produk
                                       tooltip: 'Hapus',
                                     ),
                                   ],

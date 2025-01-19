@@ -1,18 +1,18 @@
+//digunakan untuk header halaman
 import 'package:flutter/material.dart';
+import 'package:pl2_kasir/pages/login.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String currentRole;
+  final String userRole;
   final Function(String) onRoleSwitch;
-  final VoidCallback onLogout;
-  final bool isAdmin;
 
   const CustomAppBar({
-    super.key,
+    Key? key,
     required this.currentRole,
+    required this.userRole,
     required this.onRoleSwitch,
-    required this.onLogout,
-    required this.isAdmin,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,26 +26,35 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 : 'Pelanggan Dashboard',
       ),
       actions: [
-        if (isAdmin) _buildRoleSwitcher(),
+        _buildRoleSwitcher(),
         IconButton(
           icon: const Icon(Icons.logout),
-          onPressed: onLogout,
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginPage()),
+            );
+          },
         ),
       ],
     );
   }
 
   Widget _buildRoleSwitcher() {
-    return PopupMenuButton<String>(
-      onSelected: onRoleSwitch,
-      icon: const Icon(Icons.swap_horiz),
-      itemBuilder: (context) => [
-        const PopupMenuItem(value: 'admin', child: Text('Switch to admin')),
-        const PopupMenuItem(value: 'pegawai', child: Text('Switch to pegawai')),
-        const PopupMenuItem(
-            value: 'pelanggan', child: Text('Switch to pelanggan')),
-      ],
-    );
+    return userRole == 'admin'
+        ? PopupMenuButton<String>(
+            onSelected: onRoleSwitch,
+            icon: const Icon(Icons.swap_horiz),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                  value: 'admin', child: Text('Switch to admin')),
+              const PopupMenuItem(
+                  value: 'pegawai', child: Text('Switch to pegawai')),
+              const PopupMenuItem(
+                  value: 'pelanggan', child: Text('Switch to pelanggan')),
+            ],
+          )
+        : Container();
   }
 
   @override

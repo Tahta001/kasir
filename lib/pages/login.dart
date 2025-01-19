@@ -1,8 +1,11 @@
+//halaman login
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/pages/homepage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }

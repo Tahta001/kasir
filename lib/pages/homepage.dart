@@ -1,6 +1,10 @@
+//homepage yang akan dimasuki saat berhasil login
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/pages/create_produk.dart';
-import 'package:pl2_kasir/pages/login.dart';
+import 'package:pl2_kasir/wigdet/app_bar.dart';
+import 'package:pl2_kasir/wigdet/bottom_nav.dart';
+import 'package:pl2_kasir/wigdet/customer_product_list.dart';
+import 'package:pl2_kasir/wigdet/product_list.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,7 +28,6 @@ class _HomePageState extends State<HomePage> {
   late String _currentRole;
   List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _filteredProducts = [];
-  String _searchQuery = '';
   bool _isLoading = true;
 
   @override
@@ -43,39 +46,17 @@ class _HomePageState extends State<HomePage> {
         _isLoading = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading products: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading products: $e')),
+        );
+      }
       setState(() => _isLoading = false);
     }
   }
 
-  void _switchRole(String role) {
-    setState(() {
-      _currentRole = role;
-    });
-  }
-
-  Widget _buildRoleSwitcher() {
-    return widget.userRole == 'admin'
-        ? PopupMenuButton<String>(
-            onSelected: _switchRole,
-            icon: const Icon(Icons.swap_horiz),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                  value: 'admin', child: Text('Switch to admin')),
-              const PopupMenuItem(
-                  value: 'pegawai', child: Text('Switch to pegawai')),
-              const PopupMenuItem(
-                  value: 'pelanggan', child: Text('Switch to pelanggan')),
-            ],
-          )
-        : Container();
-  }
-
   void _filterProducts(String query) {
     setState(() {
-      _searchQuery = query;
       if (query.isEmpty) {
         _filteredProducts = _products;
       } else {
@@ -88,73 +69,22 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Widget _buildProductList({required bool isEditable}) {
-    return ListView.builder(
-      itemCount: _filteredProducts.length,
-      itemBuilder: (context, index) {
-        final product = _filteredProducts[index];
-        return Card(
-          child: ListTile(
-            title: Text(product['namaproduk'] ?? 'Nama tidak tersedia'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Harga: Rp ${product['harga']}'),
-                Text('Stok: ${product['stok']}'),
-              ],
-            ),
-            trailing: isEditable
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ProductPage(productId: product['id']),
-                            ),
-                          ).then((_) => _fetchProducts()); // Refresh after edit
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _showDeleteConfirmation(product['id']),
-                      ),
-                    ],
-                  )
-                : null,
-          ),
+  Future<void> _deleteProduct(int id) async {
+    try {
+      await Supabase.instance.client.from('produk').delete().eq('id', id);
+      await _fetchProducts();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Produk berhasil dihapus')),
         );
-      },
-    );
-  }
-
-  Future<void> _showDeleteConfirmation(int id) async {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Hapus'),
-          content: const Text('Apakah Anda yakin ingin menghapus produk ini?'),
-          actions: [
-            TextButton(
-              child: const Text('Batal'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text('Hapus'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _deleteProduct(id);
-              },
-            ),
-          ],
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error menghapus produk: $e')),
         );
-      },
-    );
+      }
+    }
   }
 
   Widget _buildContent() {
@@ -177,7 +107,12 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _buildProductList(isEditable: true),
+                : ProductList(
+                    products: _filteredProducts,
+                    isEditable: true,
+                    onDelete: _deleteProduct,
+                    onRefresh: _fetchProducts,
+                  ),
           ),
         ],
       );
@@ -200,7 +135,7 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _buildProductListPelanggan(),
+                : CustomerProductList(products: _filteredProducts),
           ),
         ],
       );
@@ -209,94 +144,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _buildProductListPelanggan() {
-    return ListView.builder(
-      itemCount: _filteredProducts.length,
-      itemBuilder: (context, index) {
-        final product = _filteredProducts[index];
-        return Card(
-          child: ListTile(
-            title: Text(product['namaproduk'] ?? 'Nama tidak tersedia'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Harga: Rp ${product['harga']}'),
-                Text('Stok: ${product['stok']}'),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add_shopping_cart),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Produk ditambahkan ke keranjang')),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.shopping_bag),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Produk dibeli!')),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _deleteProduct(int id) async {
-    try {
-      await Supabase.instance.client.from('produk').delete().eq('id', id);
-      setState(() {
-        _products.removeWhere((product) => product['id'] == id);
-        _filteredProducts = _products;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Produk berhasil dihapus')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error menghapus produk: $e')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 94, 120, 236),
-        title: Text(
-          _currentRole == 'admin'
-              ? 'Admin Dashboard'
-              : _currentRole == 'pegawai'
-                  ? 'Pegawai Dashboard'
-                  : 'Pelanggan Dashboard',
-        ),
-        actions: [
-          _buildRoleSwitcher(),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
-              );
-            },
-          ),
-        ],
+      appBar: CustomAppBar(
+        currentRole: _currentRole,
+        userRole: widget.userRole,
+        onRoleSwitch: (role) => setState(() => _currentRole = role),
       ),
       body: _buildContent(),
       floatingActionButton:
@@ -314,53 +168,10 @@ class _HomePageState extends State<HomePage> {
                   },
                 )
               : null,
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: CustomBottomNav(
+        currentRole: _currentRole,
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        items: _currentRole == 'pelanggan'
-            ? const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.shopping_cart),
-                  label: 'Keranjang',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.account_circle),
-                  label: 'Profil',
-                ),
-              ]
-            : _currentRole == 'admin'
-                ? const [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.home),
-                      label: 'Home',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.people),
-                      label: 'Users',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.settings),
-                      label: 'Settings',
-                    ),
-                  ]
-                : const [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.home),
-                      label: 'Home',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.settings),
-                      label: 'Settings',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.people),
-                      label: 'User',
-                    ),
-                  ],
       ),
     );
   }
