@@ -1,6 +1,8 @@
-//homepage yang akan dimasuki saat berhasil login
+// ignore_for_file: use_super_parameters, library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/pages/create_produk.dart';
+import 'package:pl2_kasir/pages/user_management.dart'; // Tambahkan import ini
 import 'package:pl2_kasir/wigdet/app_bar.dart';
 import 'package:pl2_kasir/wigdet/bottom_nav.dart';
 import 'package:pl2_kasir/wigdet/customer_product_list.dart';
@@ -144,6 +146,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _handleNavigation(int index) {
+    setState(() => _currentIndex = index);
+
+    if (_currentRole == 'admin' && index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const UserManagementPage(),
+        ),
+      );
+    }
+    // Tambahkan navigasi untuk menu lain sesuai kebutuhan
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,7 +178,8 @@ class _HomePageState extends State<HomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ProductPage(productId: null),
+                        builder: (context) =>
+                            const CreateProductPage(productId: null),
                       ),
                     ).then((_) => _fetchProducts());
                   },
@@ -171,7 +188,7 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: CustomBottomNav(
         currentRole: _currentRole,
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: _handleNavigation, // Menggunakan fungsi _handleNavigation
       ),
     );
   }

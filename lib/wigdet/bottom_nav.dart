@@ -1,5 +1,5 @@
-//digunakan untuk mengatur navigasi halaman sesuai role
 import 'package:flutter/material.dart';
+import 'package:pl2_kasir/pages/user_management.dart';
 
 class CustomBottomNav extends StatelessWidget {
   final String currentRole;
@@ -54,15 +54,15 @@ class CustomBottomNav extends StatelessWidget {
         ),
       ];
     } else {
-      //untuk pegawai
+      // untuk pegawai
       return const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.people),
-          label: 'User',
+          icon: Icon(Icons.account_circle),
+          label: 'Profil',
         ),
       ];
     }

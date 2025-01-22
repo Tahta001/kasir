@@ -57,7 +57,7 @@ class ProductList extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  ProductPage(productId: product['id']),
+                                  CreateProductPage(productId: product['id']),
                             ),
                           ).then((_) => onRefresh());
                         },
