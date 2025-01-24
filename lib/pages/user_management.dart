@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
 }
 
 class UserManagementPage extends StatefulWidget {
-  const UserManagementPage({Key? key}) : super(key: key);
+  const UserManagementPage({super.key});
 
   @override
   _UserManagementPageState createState() => _UserManagementPageState();
@@ -75,7 +75,7 @@ class _UserManagementPageState extends State<UserManagementPage>
           .from('user')
           .select()
           .eq('role', 'pegawai')
-          .order('id');
+          .order('userid');
       setState(() {
         _pegawaiList = List<Map<String, dynamic>>.from(response);
       });
@@ -86,7 +86,8 @@ class _UserManagementPageState extends State<UserManagementPage>
 
   Future<void> _loadPelanggan() async {
     try {
-      final response = await _supabase.from('pelanggan').select().order('id');
+      final response =
+          await _supabase.from('pelanggan').select().order('pelangganid');
       setState(() {
         _pelangganList = List<Map<String, dynamic>>.from(response);
       });
@@ -142,6 +143,7 @@ class _UserManagementPageState extends State<UserManagementPage>
 
     setState(() => _isLoading = true);
     try {
+      //terhubung denfgan tabel pelanggan
       await _supabase.from('pelanggan').insert({
         'nama': _pelangganNamaController.text,
         'alamat': _pelangganAlamatController.text,
@@ -159,23 +161,29 @@ class _UserManagementPageState extends State<UserManagementPage>
     }
   }
 
-  Future<void> _deletePegawai(String id) async {
+  Future<void> _deletePegawai(int id) async {
+    setState(() => _isLoading = true);
     try {
-      await _supabase.from('user').delete().eq('id', id);
+      await _supabase.from('user').delete().eq('userid', id);
       await _loadPegawai();
       _showSuccess('Pegawai berhasil dihapus');
     } catch (e) {
       _showError('Error menghapus pegawai', e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   Future<void> _deletePelanggan(int id) async {
+    setState(() => _isLoading = true);
     try {
-      await _supabase.from('pelanggan').delete().eq('id', id);
+      await _supabase.from('pelanggan').delete().eq('pelangganid', id);
       await _loadPelanggan();
       _showSuccess('Pelanggan berhasil dihapus');
     } catch (e) {
       _showError('Error menghapus pelanggan', e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -260,7 +268,8 @@ class _UserManagementPageState extends State<UserManagementPage>
                     subtitle: Text('Role: ${pegawai['role']}'),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deletePegawai(pegawai['id']),
+                      onPressed: () =>
+                          _deletePegawai(pegawai['userid']), // Changed to int
                     ),
                   ),
                 );
@@ -339,7 +348,8 @@ class _UserManagementPageState extends State<UserManagementPage>
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deletePelanggan(pelanggan['id']),
+                      onPressed: () =>
+                          _deletePelanggan(pelanggan['pelangganid']),
                     ),
                   ),
                 );

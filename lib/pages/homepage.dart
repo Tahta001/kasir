@@ -1,8 +1,7 @@
-// ignore_for_file: use_super_parameters, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/pages/create_produk.dart';
-import 'package:pl2_kasir/pages/user_management.dart'; // Tambahkan import ini
+import 'package:pl2_kasir/pages/penjualan.dart';
+import 'package:pl2_kasir/pages/user_management.dart';
 import 'package:pl2_kasir/wigdet/app_bar.dart';
 import 'package:pl2_kasir/wigdet/bottom_nav.dart';
 import 'package:pl2_kasir/wigdet/customer_product_list.dart';
@@ -73,7 +72,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _deleteProduct(int id) async {
     try {
-      await Supabase.instance.client.from('produk').delete().eq('id', id);
+      await Supabase.instance.client.from('produk').delete().eq('produkid', id);
       await _fetchProducts();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -94,6 +93,7 @@ class _HomePageState extends State<HomePage> {
       return Column(
         children: [
           Padding(
+            // opsional
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               onChanged: _filterProducts,
@@ -157,6 +157,14 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+    if (_currentRole == 'pegawai' && index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentPage(),
+        ),
+      );
+    }
     // Tambahkan navigasi untuk menu lain sesuai kebutuhan
   }
 
@@ -193,3 +201,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+//membuat halaman pembayaran berisi list produk dan ikon -+ unutk beli
+//ada dropdown unutk memilih member(nama pembeli)
+//dibawahnya ada ikon lanjutkan transaksi(pembeyaran)
+//lalu membuat halaman transaksi yg berisi hasil penjualan(trtansaksi)
+//berisi nama pelanggan dan total
+//di sebelah kanan ada tulisan lihat detai
+//saat diklik masuk ke detail penjualan berisi nama,produk,total (sesuai tabel)

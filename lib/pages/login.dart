@@ -35,13 +35,13 @@ class _LoginPageState extends State<LoginPage> {
       // Query ke Supabase untuk login
       final response = await Supabase.instance.client
           .from('user')
-          .select('id, username, role') // Memastikan mendapatkan role
+          .select('userid, username, role') // Memastikan mendapatkan role
           .eq('username', _usernameController.text.trim())
           .eq('password', _passwordController.text.trim())
           .maybeSingle();
 
       if (response != null) {
-        final userId = response['id'];
+        final userId = response['userid'];
         final username = response['username'];
         final userRole = response['role'];
 

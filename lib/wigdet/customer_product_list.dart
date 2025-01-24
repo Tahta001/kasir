@@ -40,17 +40,6 @@ class CustomerProductList extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.shopping_cart, color: Colors.blue),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Ditambahkan ke keranjang'),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                ),
-                IconButton(
                   icon: const Icon(Icons.shopping_bag, color: Colors.green),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(

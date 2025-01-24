@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pl2_kasir/pages/user_management.dart';
 
 class CustomBottomNav extends StatelessWidget {
   final String currentRole;
@@ -59,6 +58,10 @@ class CustomBottomNav extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.money),
+          label: 'Pembayaran',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.account_circle),

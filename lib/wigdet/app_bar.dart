@@ -1,4 +1,4 @@
-//digunakan untuk header halaman
+//digunakan untuk head bar halaman
 // ignore_for_file: prefer_const_constructors, use_super_parameters
 
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: const Color.fromARGB(255, 94, 120, 236),
-      title: Text(
+      title: Text( //digunakakn unutk judul halaman yg berbeda per lore
         currentRole == 'admin'
             ? 'Admin Dashboard'
             : currentRole == 'pegawai'
@@ -42,7 +42,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildRoleSwitcher() {
+  Widget _buildRoleSwitcher() { // digunakan agar admin bisa masuk ke halaman pegawai dan pelanggan
     return userRole == 'admin'
         ? PopupMenuButton<String>(
             onSelected: onRoleSwitch,

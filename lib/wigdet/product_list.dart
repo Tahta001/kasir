@@ -46,7 +46,7 @@ class ProductList extends StatelessWidget {
                 ),
               ],
             ),
-            trailing: isEditable
+            trailing: isEditable //floating button yg mengarah ke halaman create_produk
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -56,16 +56,16 @@ class ProductList extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  CreateProductPage(productId: product['id']),
+                              builder: (context) => CreateProductPage(
+                                  productId: product['produkid']),
                             ),
                           ).then((_) => onRefresh());
                         },
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () =>
-                            _showDeleteConfirmation(context, product['id']),
+                        onPressed: () => _showDeleteConfirmation(
+                            context, product['produkid']),
                       ),
                     ],
                   )
