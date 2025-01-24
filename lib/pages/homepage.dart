@@ -202,7 +202,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-//membuat halaman pembayaran berisi list produk dan ikon -+ unutk beli
 //ada dropdown unutk memilih member(nama pembeli)
 //dibawahnya ada ikon lanjutkan transaksi(pembeyaran)
 //lalu membuat halaman transaksi yg berisi hasil penjualan(trtansaksi)

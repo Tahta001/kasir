@@ -1,162 +1,189 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class Produk {
-  int Produktid;
-  String NamaProduk;
-  double Harga;
-  int Stok;
-
-  Produk({
-    required this.Produktid,
-    required this.NamaProduk,
-    required this.Harga,
-    required this.Stok,
-  });
-}
-
 class PaymentPage extends StatefulWidget {
-  const PaymentPage({super.key});
-
   @override
   _PaymentPageState createState() => _PaymentPageState();
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  final supabase = Supabase.instance.client;
-  List<Produk> _products = [];
-  final List<Produk> _selectedProducts = [];
+  final _supabase = Supabase.instance.client;
+
+  List<Product> _products = [];
+  List<Customer> _customers = [];
+  Map<int, int> _cart = {};
   double _totalAmount = 0.0;
+  int? _selectedCustomerId;
 
   @override
   void initState() {
     super.initState();
     _fetchProducts();
+    _fetchCustomers();
   }
 
   Future<void> _fetchProducts() async {
-    final response = await supabase.from('produk').select('*');
-    _products = response
-        .map((row) => Produk(
-              Produktid: row['produktid'],
-              NamaProduk: row['namaproduk'],
-              Harga: double.parse(row['harga'].toString()),
-              Stok: row['stok'],
-            ))
-        .toList();
-    setState(() {});
-  }
-
-  void _addToCart(Produk product) {
-    if (product.Stok > 0) {
+    try {
+      final response = await _supabase.from('produk').select();
       setState(() {
-        _selectedProducts.add(product);
-        _totalAmount += product.Harga;
+        _products = response.map((item) => Product.fromJson(item)).toList();
       });
+        } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading products: $e')),
+      );
     }
   }
 
-  void _removeFromCart(Produk product) {
+  Future<void> _fetchCustomers() async {
+    try {
+      final response = await _supabase.from('pelanggan').select();
+      setState(() {
+        _customers = response.map((item) => Customer.fromJson(item)).toList();
+      });
+        } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading customers: $e')),
+      );
+    }
+  }
+
+  void _updateCart(int produkId, int value) {
     setState(() {
-      _selectedProducts.remove(product);
-      _totalAmount -= product.Harga;
+      if (!_cart.containsKey(produkId)) {
+        _cart[produkId] = 0;
+      }
+      _cart[produkId] = (_cart[produkId]! + value).clamp(0, 999);
+
+      if (_cart[produkId] == 0) {
+        _cart.remove(produkId);
+      }
+
+      _totalAmount = _cart.entries.fold(0.0, (sum, entry) {
+        final produk = _products.firstWhere((p) => p.produkId == entry.key);
+        return sum + (produk.harga * entry.value);
+      });
     });
   }
 
   Future<void> _processPayment() async {
+    if (_cart.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Keranjang kosong!')),
+      );
+      return;
+    }
+
+    if (_selectedCustomerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih pelanggan terlebih dahulu!')),
+      );
+      return;
+    }
+
     try {
-      await showProgressIndicator(context);
-      final transaction = await supabase.from('penjualan');
-      // Insert the sales record and get the penjualanid
-      final penjualanResponse = await transaction
+      // Insert ke tabel `penjualan`
+      final penjualanResponse = await _supabase
           .from('penjualan')
           .insert({
-            'pelangganid': 1,
             'tanggalpenjualan': DateTime.now().toIso8601String(),
             'totalharga': _totalAmount,
+            'pelangganid': _selectedCustomerId,
           })
-          .returning('penjualanid')
+          .select()
           .single();
+      final penjualanId = penjualanResponse['penjualanid'];
 
-      final penjualanid = penjualanResponse['penjualanid'];
+      // Insert ke tabel `detailpenjualan`
+      for (var entry in _cart.entries) {
+        final produk = _products.firstWhere((p) => p.produkId == entry.key);
+        await _supabase.from('detailpenjualan').insert({
+          'id_penjualan': penjualanId,
+          'produkid': produk.produkId,
+          'jumlah': entry.value,
+          'subtotal': produk.harga * entry.value,
+        });
 
-      await _updateProductStocks(transaction, penjualanid);
-      await _insertDetailSales(transaction, penjualanid);
-      await transaction.commit();
-      Navigator.pushNamed(context, '/payment_confirmation');
+        // Kurangi stok produk
+        await _supabase.from('produk').update({
+          'stok': produk.stok - entry.value,
+        }).eq('produkid', produk.produkId);
+      }
+
+      // Reset keranjang
+      setState(() {
+        _cart.clear();
+        _totalAmount = 0.0;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pembayaran berhasil diproses!')),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error processing payment: $e'),
-        ),
+        SnackBar(content: Text('Error processing payment: $e')),
       );
-    } finally {
-      Navigator.of(context).pop();
     }
-  }
-
-  Future<void> _updateProductStocks(transaction, int penjualanid) async {
-    final productUpdates = _selectedProducts.map((product) => {
-          'produktid': product.Produktid,
-          'stok': product.Stok - 1,
-        });
-    await transaction.from('produk').update(productUpdates);
-  }
-
-  Future<void> _insertDetailSales(transaction, int penjualanid) async {
-    final detailSales = _selectedProducts.map((product) => {
-          'penjualanid': penjualanid,
-          'produktid': product.Produktid,
-          'harga': product.Harga,
-        });
-    await transaction.from('detailpenjualan').insert(detailSales);
-  }
-
-  Future<void> showProgressIndicator(BuildContext context) async {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pembayaran'),
+        title: const Text('Proses Pembayaran'),
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: DropdownButton<int>(
+              isExpanded: true,
+              value: _selectedCustomerId,
+              hint: const Text('Pilih Pelanggan'),
+              items: _customers.map((customer) {
+                return DropdownMenuItem<int>(
+                  value: customer.pelangganId,
+                  child: Text(customer.nama),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCustomerId = value;
+                });
+              },
+            ),
+          ),
           Expanded(
             child: ListView.builder(
               itemCount: _products.length,
               itemBuilder: (context, index) {
-                Produk product = _products[index];
-                return ListTile(
-                  title: Text(product.NamaProduk),
-                  subtitle:
-                      Text('Harga: Rp ${product.Harga.toStringAsFixed(2)}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () => _removeFromCart(product),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                          '${_selectedProducts.where((p) => p.Produktid == product.Produktid).length}'),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => _addToCart(product),
-                      ),
-                    ],
+                final produk = _products[index];
+                final jumlah = _cart[produk.produkId] ?? 0;
+
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    title: Text(produk.namaproduk),
+                    subtitle:
+                        Text('Harga: Rp${produk.harga}, Stok: ${produk.stok}'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          onPressed: jumlah > 0
+                              ? () => _updateCart(produk.produkId, -1)
+                              : null,
+                        ),
+                        Text(jumlah.toString()),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: produk.stok > jumlah
+                              ? () => _updateCart(produk.produkId, 1)
+                              : null,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -164,20 +191,62 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Total: Rp ${_totalAmount.toStringAsFixed(2)}'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _processPayment,
-                  child: const Text('Proses Pembayaran'),
-                ),
-              ],
+            child: Text(
+              'Total: Rp$_totalAmount',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: _processPayment,
+              child: const Text('Lanjutkan Pembayaran'),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// Model Produk
+class Product {
+  final int produkId;
+  final String namaproduk;
+  final double harga;
+  final int stok;
+
+  Product({
+    required this.produkId,
+    required this.namaproduk,
+    required this.harga,
+    required this.stok,
+  });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      produkId: json['produkid'],
+      namaproduk: json['namaproduk'],
+      harga: json['harga'].toDouble(),
+      stok: json['stok'],
+    );
+  }
+}
+
+// Model Pelanggan
+class Customer {
+  final int pelangganId;
+  final String nama;
+
+  Customer({
+    required this.pelangganId,
+    required this.nama,
+  });
+
+  factory Customer.fromJson(Map<String, dynamic> json) {
+    return Customer(
+      pelangganId: json['pelangganid'],
+      nama: json['nama'],
     );
   }
 }

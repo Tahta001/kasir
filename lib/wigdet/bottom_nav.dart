@@ -6,11 +6,11 @@ class CustomBottomNav extends StatelessWidget {
   final Function(int) onTap;
 
   const CustomBottomNav({
-    Key? key,
+    super.key,
     required this.currentRole,
     required this.currentIndex,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +60,8 @@ class CustomBottomNav extends StatelessWidget {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.money),
-          label: 'Pembayaran',
+          icon: Icon(Icons.dashboard_customize),
+          label: 'Transaksi',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.account_circle),
