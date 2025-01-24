@@ -25,10 +25,12 @@ class _PaymentPageState extends State<PaymentPage> {
   Future<void> _fetchProducts() async {
     try {
       final response = await _supabase.from('produk').select();
-      setState(() {
-        _products = response.map((item) => Product.fromJson(item)).toList();
-      });
-        } catch (e) {
+      if (response != null && response is List) {
+        setState(() {
+          _products = response.map((item) => Product.fromJson(item)).toList();
+        });
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading products: $e')),
       );
@@ -38,10 +40,12 @@ class _PaymentPageState extends State<PaymentPage> {
   Future<void> _fetchCustomers() async {
     try {
       final response = await _supabase.from('pelanggan').select();
-      setState(() {
-        _customers = response.map((item) => Customer.fromJson(item)).toList();
-      });
-        } catch (e) {
+      if (response != null && response is List) {
+        setState(() {
+          _customers = response.map((item) => Customer.fromJson(item)).toList();
+        });
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading customers: $e')),
       );
@@ -97,10 +101,10 @@ class _PaymentPageState extends State<PaymentPage> {
       // Insert ke tabel `detailpenjualan`
       for (var entry in _cart.entries) {
         final produk = _products.firstWhere((p) => p.produkId == entry.key);
-        await _supabase.from('detailpenjualan').insert({
-          'id_penjualan': penjualanId,
+        await _supabase.from('detaipenjualan').insert({
+          'penjualanid': penjualanId,
           'produkid': produk.produkId,
-          'jumlah': entry.value,
+          'jumlahproduk': entry.value,
           'subtotal': produk.harga * entry.value,
         });
 
@@ -114,6 +118,7 @@ class _PaymentPageState extends State<PaymentPage> {
       setState(() {
         _cart.clear();
         _totalAmount = 0.0;
+        _selectedCustomerId = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

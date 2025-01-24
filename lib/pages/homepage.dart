@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/pages/create_produk.dart';
 import 'package:pl2_kasir/pages/penjualan.dart';
+import 'package:pl2_kasir/pages/transaksi.dart';
 import 'package:pl2_kasir/pages/user_management.dart';
 import 'package:pl2_kasir/wigdet/app_bar.dart';
 import 'package:pl2_kasir/wigdet/bottom_nav.dart';
@@ -165,6 +166,15 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+    if (_currentRole == 'pegawai' && index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TransactionHistoryPage(),
+        ),
+      );
+    }
+
     // Tambahkan navigasi untuk menu lain sesuai kebutuhan
   }
 
@@ -202,9 +212,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-//ada dropdown unutk memilih member(nama pembeli)
-//dibawahnya ada ikon lanjutkan transaksi(pembeyaran)
-//lalu membuat halaman transaksi yg berisi hasil penjualan(trtansaksi)
+//membuat halaman transaksi yg berisi hasil penjualan(trtansaksi)
 //berisi nama pelanggan dan total
 //di sebelah kanan ada tulisan lihat detai
 //saat diklik masuk ke detail penjualan berisi nama,produk,total (sesuai tabel)

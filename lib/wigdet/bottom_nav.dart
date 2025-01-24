@@ -60,12 +60,12 @@ class CustomBottomNav extends StatelessWidget {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard_customize),
-          label: 'Transaksi',
+          icon: Icon(Icons.money_outlined),
+          label: 'pembayaran',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle),
-          label: 'Profil',
+          icon: Icon(Icons.trolley),
+          label: 'transaksi',
         ),
       ];
     }
