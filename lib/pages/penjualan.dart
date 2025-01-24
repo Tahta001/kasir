@@ -101,7 +101,7 @@ class _PaymentPageState extends State<PaymentPage> {
       // Insert ke tabel `detailpenjualan`
       for (var entry in _cart.entries) {
         final produk = _products.firstWhere((p) => p.produkId == entry.key);
-        await _supabase.from('detaipenjualan').insert({
+        await _supabase.from('detailpenjualan').insert({
           'penjualanid': penjualanId,
           'produkid': produk.produkId,
           'jumlahproduk': entry.value,

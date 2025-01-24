@@ -48,8 +48,8 @@ class CustomBottomNav extends StatelessWidget {
           label: 'Users',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: 'Settings',
+          icon: Icon(Icons.trolley),
+          label: 'transaksi',
         ),
       ];
     } else {
@@ -60,7 +60,7 @@ class CustomBottomNav extends StatelessWidget {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.money_outlined),
+          icon: Icon(Icons.credit_card),
           label: 'pembayaran',
         ),
         BottomNavigationBarItem(

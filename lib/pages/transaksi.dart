@@ -1,87 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Model untuk Transaksi
+// Model for Transaction
 class Transaction {
   final int penjualanId;
   final String tanggalPenjualan;
   final double totalHarga;
-  final String namaPelanggan;
+  final int pelangganId;
 
   Transaction({
     required this.penjualanId,
     required this.tanggalPenjualan,
     required this.totalHarga,
-    required this.namaPelanggan,
+    required this.pelangganId,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
-      penjualanId: json['penjualanid'],
-      tanggalPenjualan: json['tanggalpenjualan'],
-      totalHarga: json['totalharga'].toDouble(),
-      namaPelanggan: json['pelanggan']['nama'],
+      penjualanId: json['penjualanid'] as int,
+      tanggalPenjualan: json['tanggalpenjualan'] as String,
+      totalHarga: (json['totalharga'] as num).toDouble(),
+      pelangganId: json['pelangganid'] as int,
     );
   }
 }
 
-// Model untuk Detail Transaksi
+// Model for TransactionDetail
 class TransactionDetail {
   final int detailId;
   final int penjualanId;
-  final String namaProduk;
+  final int produkId;
   final int jumlahProduk;
   final double subtotal;
+  final String namaProduk;
 
   TransactionDetail({
     required this.detailId,
     required this.penjualanId,
-    required this.namaProduk,
+    required this.produkId,
     required this.jumlahProduk,
     required this.subtotal,
+    required this.namaProduk,
   });
 
   factory TransactionDetail.fromJson(Map<String, dynamic> json) {
     return TransactionDetail(
-      detailId: json['detailid'],
-      penjualanId: json['penjualanid'],
-      namaProduk: json['produk']['namaproduk'],
-      jumlahProduk: json['jumlahproduk'],
-      subtotal: json['subtotal'].toDouble(),
+      detailId: json['detailid'] as int,
+      penjualanId: json['penjualanid'] as int,
+      produkId: json['produkid'] as int,
+      jumlahProduk: json['jumlahproduk'] as int,
+      subtotal: (json['subtotal'] as num).toDouble(),
+      namaProduk: json['namaproduk'] as String,
     );
   }
 }
 
 class TransactionHistoryPage extends StatefulWidget {
+  const TransactionHistoryPage({super.key});
+
   @override
   _TransactionHistoryPageState createState() => _TransactionHistoryPageState();
 }
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   final _supabase = Supabase.instance.client;
-  List<Transaction> _transactions = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchTransactions();
-  }
-
-  Future<void> _fetchTransactions() async {
+  Future<List<Transaction>> _fetchTransactions() async {
     try {
-      final response = await _supabase
+      final List<dynamic> response = await _supabase
           .from('penjualan')
-          .select('penjualanid, tanggalpenjualan, totalharga, pelanggan(nama)');
-      
-      setState(() {
-        _transactions = response
-            .map<Transaction>((item) => Transaction.fromJson(item))
-            .toList();
-      });
+          .select(); // Fetch data without using .execute
+
+      // Convert raw data to List<Transaction>
+      return response.map((item) => Transaction.fromJson(item)).toList();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading transactions: $e')),
-      );
+      debugPrint('Error fetching transactions: $e');
+      throw Exception('Failed to fetch transactions');
     }
   }
 
@@ -91,26 +85,41 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       appBar: AppBar(
         title: const Text('Riwayat Transaksi'),
       ),
-      body: ListView.builder(
-        itemCount: _transactions.length,
-        itemBuilder: (context, index) {
-          final transaction = _transactions[index];
-          return ListTile(
-            title: Text(transaction.namaPelanggan),
-            subtitle: Text('Total: Rp${transaction.totalHarga}'),
-            trailing: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TransactionDetailPage(
-                      penjualanId: transaction.penjualanId,
+      body: FutureBuilder<List<Transaction>>(
+        future: _fetchTransactions(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Tidak ada transaksi tersedia.'));
+          }
+
+          final transactions = snapshot.data!;
+          return ListView.builder(
+            itemCount: transactions.length,
+            itemBuilder: (context, index) {
+              final transaction = transactions[index];
+              return ListTile(
+                title: Text('#${transaction.penjualanId}'),
+                subtitle: Text(
+                    'Tanggal: ${transaction.tanggalPenjualan}\nTotal Harga: Rp${transaction.totalHarga}'),
+                trailing: Text('Pelanggan ID: ${transaction.pelangganId}'),
+                onTap: () {
+                  // Navigate to transaction details page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TransactionDetailPage(
+                          penjualanId: transaction.penjualanId),
                     ),
-                  ),
-                );
-              },
-              child: const Text('Lihat Detail'),
-            ),
+                  );
+                },
+              );
+            },
           );
         },
       ),
@@ -121,8 +130,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 class TransactionDetailPage extends StatefulWidget {
   final int penjualanId;
 
-  const TransactionDetailPage({Key? key, required this.penjualanId})
-      : super(key: key);
+  const TransactionDetailPage({super.key, required this.penjualanId});
 
   @override
   _TransactionDetailPageState createState() => _TransactionDetailPageState();
@@ -130,34 +138,20 @@ class TransactionDetailPage extends StatefulWidget {
 
 class _TransactionDetailPageState extends State<TransactionDetailPage> {
   final _supabase = Supabase.instance.client;
-  List<TransactionDetail> _transactionDetails = [];
-  double _totalTransaksi = 0.0;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchTransactionDetails();
-  }
-
-  Future<void> _fetchTransactionDetails() async {
+  Future<List<TransactionDetail>> _fetchTransactionDetails() async {
     try {
-      final response = await _supabase
+      final List<dynamic> response = await _supabase
           .from('detailpenjualan')
-          .select('detailid, penjualanid, jumlahproduk, subtotal, produk(namaproduk)')
+          .select(
+              'detailid, penjualanid, produkid, jumlahproduk, subtotal, produk(namaproduk)')
           .eq('penjualanid', widget.penjualanId);
-      
-      setState(() {
-        _transactionDetails = response
-            .map<TransactionDetail>((item) => TransactionDetail.fromJson(item))
-            .toList();
-        
-        _totalTransaksi = _transactionDetails
-            .fold(0.0, (sum, detail) => sum + detail.subtotal);
-      });
+
+      // Convert raw data to List<TransactionDetail>
+      return response.map((item) => TransactionDetail.fromJson(item)).toList();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading transaction details: $e')),
-      );
+      debugPrint('Error fetching transaction details: $e');
+      throw Exception('Failed to fetch transaction details');
     }
   }
 
@@ -167,29 +161,48 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       appBar: AppBar(
         title: const Text('Detail Transaksi'),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: _transactionDetails.length,
-              itemBuilder: (context, index) {
-                final detail = _transactionDetails[index];
-                return ListTile(
-                  title: Text(detail.namaProduk),
-                  subtitle: Text('Jumlah: ${detail.jumlahProduk}'),
-                  trailing: Text('Subtotal: Rp${detail.subtotal}'),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Total Transaksi: Rp$_totalTransaksi',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ),
-        ],
+      body: FutureBuilder<List<TransactionDetail>>(
+        future: _fetchTransactionDetails(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Tidak ada detail transaksi.'));
+          }
+
+          final details = snapshot.data!;
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: details.length,
+                  itemBuilder: (context, index) {
+                    final detail = details[index];
+                    return ListTile(
+                      title: Text(detail.namaProduk),
+                      subtitle: Text('Jumlah: ${detail.jumlahProduk}'),
+                      trailing: Text('Subtotal: Rp${detail.subtotal}'),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Total Transaksi: Rp${details.fold<double>(
+                        0,
+                        (sum, item) => sum + item.subtotal,
+                      ).toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

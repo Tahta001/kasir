@@ -158,6 +158,14 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+    if (_currentRole == 'admin' && index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const TransactionHistoryPage(),
+        ),
+      );
+    }
     if (_currentRole == 'pegawai' && index == 1) {
       Navigator.push(
         context,
@@ -170,7 +178,7 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => TransactionHistoryPage(),
+          builder: (context) => const TransactionHistoryPage(),
         ),
       );
     }
@@ -211,8 +219,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-//membuat halaman transaksi yg berisi hasil penjualan(trtansaksi)
-//berisi nama pelanggan dan total
-//di sebelah kanan ada tulisan lihat detai
-//saat diklik masuk ke detail penjualan berisi nama,produk,total (sesuai tabel)
