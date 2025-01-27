@@ -25,11 +25,9 @@ class _PaymentPageState extends State<PaymentPage> {
   Future<void> _fetchProducts() async {
     try {
       final response = await _supabase.from('produk').select();
-      if (response != null && response is List) {
-        setState(() {
-          _products = response.map((item) => Product.fromJson(item)).toList();
-        });
-      }
+      setState(() {
+        _products = response.map((item) => Product.fromJson(item)).toList();
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading products: $e')),
@@ -40,11 +38,9 @@ class _PaymentPageState extends State<PaymentPage> {
   Future<void> _fetchCustomers() async {
     try {
       final response = await _supabase.from('pelanggan').select();
-      if (response != null && response is List) {
-        setState(() {
-          _customers = response.map((item) => Customer.fromJson(item)).toList();
-        });
-      }
+      setState(() {
+        _customers = response.map((item) => Customer.fromJson(item)).toList();
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading customers: $e')),

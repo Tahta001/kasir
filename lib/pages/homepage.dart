@@ -15,11 +15,11 @@ class HomePage extends StatefulWidget {
   final String userRole;
 
   const HomePage({
-    Key? key,
+    super.key,
     required this.userId,
     required this.username,
     required this.userRole,
-  }) : super(key: key);
+  });
 
   @override
   _HomePageState createState() => _HomePageState();

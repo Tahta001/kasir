@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:pl2_kasir/services/produk_service.dart';
 
 // Membuat StatefulWidget untuk halaman pembuatan/edit produk
-// StatefulWidget digunakan karena halaman ini memiliki state yang berubah-ubah
 class CreateProductPage extends StatefulWidget {
   // Parameter opsional productId, berguna untuk membedakan antara menambah produk baru atau mengedit produk
   final int? productId;
@@ -27,7 +26,7 @@ class CreateProductPageState extends State<CreateProductPage> {
 
   // Service untuk operasi produk
   late ProductService _productService;
-  
+
   // Flag untuk menunjukkan proses loading
   bool _isLoading = false;
 
@@ -142,7 +141,7 @@ class CreateProductPageState extends State<CreateProductPage> {
               labelText: 'Nama Produk',
               border: OutlineInputBorder(),
             ),
-            // Validasi input nama tidak boleh kosong
+            // Validasi input nama tidak boleh kosong 
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Nama produk tidak boleh kosong';
@@ -151,7 +150,7 @@ class CreateProductPageState extends State<CreateProductPage> {
             },
           ),
           const SizedBox(height: 16),
-          
+
           // Input harga produk
           TextFormField(
             controller: _priceController,
@@ -173,7 +172,7 @@ class CreateProductPageState extends State<CreateProductPage> {
             },
           ),
           const SizedBox(height: 16),
-          
+
           // Input stok produk
           TextFormField(
             controller: _stockController,
@@ -194,7 +193,7 @@ class CreateProductPageState extends State<CreateProductPage> {
             },
           ),
           const SizedBox(height: 24),
-          
+
           // Tombol untuk menambah/update produk
           ElevatedButton(
             onPressed: _isLoading ? null : _addOrUpdateProduct,
@@ -207,7 +206,7 @@ class CreateProductPageState extends State<CreateProductPage> {
             ),
           ),
           const SizedBox(height: 8),
-          
+
           // Tombol batal
           TextButton(
             onPressed: () => Navigator.pop(context),

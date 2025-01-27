@@ -1,10 +1,9 @@
-// ignore_for_file: use_key_in_widget_constructors
-
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/pages/login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
+  // Inisialisasi Supabase dengan URL proyek dan kunci anon (anonKey).
   await Supabase.initialize(
     url: 'https://ciwziofhszkfjbtzkjob.supabase.co',
     anonKey:
@@ -17,10 +16,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner:
+          false, // Menghilangkan banner debug 
       title: 'Login',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.blue, // Tema menggunakan palet warna biru.
       ),
       home: const LoginPage(),
     );
