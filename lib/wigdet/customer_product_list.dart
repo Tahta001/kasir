@@ -11,44 +11,45 @@ class CustomerProductList extends StatelessWidget {
     return ListView.builder(
       // Widget ListView.builder digunakan untuk membuat daftar produk secara dinamis.
       padding: const EdgeInsets.all(8.0), // Memberikan jarak di sekitar daftar.
-      itemCount: products.length, // Jumlah item sesuai dengan jumlah produk.
+      itemCount: products.length, 
       itemBuilder: (context, index) {
-        final product = products[index]; // Mengambil data produk berdasarkan indeks.
+        final product =
+            products[index]; // Mengambil data produk berdasarkan indeks.
         return Card(
-          // Membungkus setiap produk dalam widget Card untuk menampilkan daftar yang rapi.
-          elevation: 2, // bayangan pd kartu
-          margin: const EdgeInsets.symmetric(vertical: 4.0), // Margin antar kartu.
+          elevation: 2, // bayangan 
+          margin:
+              const EdgeInsets.symmetric(vertical: 4.0), // Margin antar kartu.
           child: ListTile(
             contentPadding: const EdgeInsets.all(16.0), // Padding dalam kartu.
             title: Text(
-              product['namaproduk'] ?? 'Nama tidak tersedia', // Nama produk.
+              product['namaproduk'] ?? 'Nama tidak tersedia', 
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Column(
               // Informasi tambahan seperti harga dan stok.
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8), // Memberikan jarak antar elemen.
+                const SizedBox(height: 8), 
                 Text(
-                  'Harga: Rp ${product['harga']}', // Menampilkan harga produk.
+                  'Harga: Rp ${product['harga']}', 
                   style: const TextStyle(fontSize: 14),
                 ),
                 Text(
-                  'Stok: ${product['stok']}', // menampilkn stok produk.
+                  'Stok: ${product['stok']}', 
                   style: const TextStyle(fontSize: 14),
                 ),
               ],
             ),
             trailing: Row(
               // Bagian trailing untuk tombol aksi.
-              mainAxisSize: MainAxisSize.min, // Menjaga ukuran row minimal.
+              mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: const Icon(Icons.shopping_bag, color: Colors.green),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Produk dibeli'), 
+                        content: Text('Produk dibeli'),
                         duration: Duration(seconds: 1), // Durasi notifikasi.
                       ),
                     );

@@ -16,13 +16,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner:
-          false, // Menghilangkan banner debug 
+      debugShowCheckedModeBanner: false, // Menghilangkan banner debug
       title: 'Login',
       theme: ThemeData(
         primarySwatch: Colors.blue, // Tema menggunakan palet warna biru.
       ),
-      home: const LoginPage(),
+      home: const LoginPage(), //halaman pertama saat dijalankn
     );
   }
 }

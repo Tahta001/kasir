@@ -1,3 +1,4 @@
+//berisi list di halaman register/user menegement
 import 'package:flutter/material.dart';
 
 class PegawaiList extends StatelessWidget {
@@ -10,7 +11,8 @@ class PegawaiList extends StatelessWidget {
   final Future<void> Function() onAdd;
   final Future<void> Function(Map<String, dynamic>) onStartEdit;
   final Future<void> Function(int) onDelete;
-  final Future<void> Function(int, String, String) onUpdate;
+  final Future<void> Function(int, String, String)
+      onUpdate; //int=id, string=pass/usn
   final VoidCallback onCancelEdit;
 
   const PegawaiList({
@@ -31,8 +33,10 @@ class PegawaiList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      //membungkus seluruh tambilan column
       children: [
         Padding(
+          //unutk atas yaitu form imput
           padding: const EdgeInsets.all(16.0),
           child: Form(
             key: formKey,
@@ -116,7 +120,7 @@ class PegawaiList extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
+        Expanded(//bafian bawa yaitu list pegawi
           child: ListView.builder(
             itemCount: pegawaiList.length,
             itemBuilder: (context, index) {

@@ -5,18 +5,14 @@ import 'package:pl2_kasir/services/produk_service.dart';
 
 // Membuat StatefulWidget untuk halaman pembuatan/edit produk
 class CreateProductPage extends StatefulWidget {
-  // Parameter opsional productId, berguna untuk membedakan antara menambah produk baru atau mengedit produk
   final int? productId;
   const CreateProductPage({super.key, this.productId});
 
-  // Membuat state untuk widget ini
   @override
   CreateProductPageState createState() => CreateProductPageState();
 }
 
-// State class untuk mengelola data dan logika halaman produk
 class CreateProductPageState extends State<CreateProductPage> {
-  // GlobalKey untuk form, digunakan untuk validasi form
   final _formKey = GlobalKey<FormState>();
 
   // Controller untuk mengontrol input teks (nama, harga, stok)
@@ -30,26 +26,20 @@ class CreateProductPageState extends State<CreateProductPage> {
   // Flag untuk menunjukkan proses loading
   bool _isLoading = false;
 
-  // Method yang dipanggil saat widget pertama kali dibuat
   @override
   void initState() {
     super.initState();
-    // Inisialisasi product service
     _productService = ProductService(context);
-    // Memuat data produk jika sedang mengedit
     _loadProductData();
   }
 
   // Method untuk memuat data produk yang akan diedit
   Future<void> _loadProductData() async {
-    // Cek apakah ada product ID (berarti sedang mengedit)
     if (widget.productId != null) {
-      // Set loading menjadi true
       setState(() => _isLoading = true);
       try {
         // Ambil daftar produk
         final products = await _productService.fetchProducts();
-        // Cari produk dengan ID yang sesuai
         final product = products.firstWhere(
           (product) => product['produkid'] == widget.productId,
           orElse: () => throw Exception('Produk tidak ditemukan'),
@@ -84,7 +74,6 @@ class CreateProductPageState extends State<CreateProductPage> {
     // Validasi form
     if (!_formKey.currentState!.validate()) return;
 
-    // Set loading menjadi true
     setState(() => _isLoading = true);
 
     // Ambil nilai dari input
@@ -116,8 +105,6 @@ class CreateProductPageState extends State<CreateProductPage> {
         SnackBar(content: Text('Terjadi kesalahan: $e')),
       );
     }
-
-    // Set loading menjadi false
     setState(() => _isLoading = false);
   }
 
@@ -141,7 +128,7 @@ class CreateProductPageState extends State<CreateProductPage> {
               labelText: 'Nama Produk',
               border: OutlineInputBorder(),
             ),
-            // Validasi input nama tidak boleh kosong 
+            // Validasi input  
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Nama produk tidak boleh kosong';
@@ -151,7 +138,6 @@ class CreateProductPageState extends State<CreateProductPage> {
           ),
           const SizedBox(height: 16),
 
-          // Input harga produk
           TextFormField(
             controller: _priceController,
             decoration: const InputDecoration(
@@ -160,7 +146,6 @@ class CreateProductPageState extends State<CreateProductPage> {
               prefixText: 'Rp ',
             ),
             keyboardType: TextInputType.number,
-            // Validasi input harga
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Harga tidak boleh kosong';
@@ -173,7 +158,6 @@ class CreateProductPageState extends State<CreateProductPage> {
           ),
           const SizedBox(height: 16),
 
-          // Input stok produk
           TextFormField(
             controller: _stockController,
             decoration: const InputDecoration(
@@ -181,7 +165,6 @@ class CreateProductPageState extends State<CreateProductPage> {
               border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
-            // Validasi input stok
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Stok tidak boleh kosong';
@@ -194,7 +177,6 @@ class CreateProductPageState extends State<CreateProductPage> {
           ),
           const SizedBox(height: 24),
 
-          // Tombol untuk menambah/update produk
           ElevatedButton(
             onPressed: _isLoading ? null : _addOrUpdateProduct,
             style: ElevatedButton.styleFrom(
@@ -207,7 +189,6 @@ class CreateProductPageState extends State<CreateProductPage> {
           ),
           const SizedBox(height: 8),
 
-          // Tombol batal
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
@@ -221,11 +202,10 @@ class CreateProductPageState extends State<CreateProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar dengan judul dinamis
+      // AppBar juudl
       appBar: AppBar(
         title: Text(widget.productId == null ? 'Tambah Produk' : 'Edit Produk'),
       ),
-      // Body dengan scroll view
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: _buildProductForm(),
