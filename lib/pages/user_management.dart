@@ -12,7 +12,8 @@ class UserManagementPage extends StatefulWidget {
 class _UserManagementPageState extends State<UserManagementPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final _pegawaiFormKey = GlobalKey<FormState>();
+  final _pegawaiFormKey =
+      GlobalKey<FormState>(); // unutk validasi imput sebelum data dikirim
   final _pegawaiUsernameController = TextEditingController();
   final _pegawaiPasswordController = TextEditingController();
   final _pelangganFormKey = GlobalKey<FormState>();
@@ -20,7 +21,7 @@ class _UserManagementPageState extends State<UserManagementPage>
   final _pelangganAlamatController = TextEditingController();
   final _pelangganNoTelpController = TextEditingController();
 
-  List<Map<String, dynamic>> _pegawaiList = [];
+  List<Map<String, dynamic>> _pegawaiList = []; //unutk menyimpan data yg dkirim(pegawai/pelanggan)
   List<Map<String, dynamic>> _pelangganList = [];
   bool _isLoading = false;
   bool _isPegawaiEditing = false;
@@ -226,7 +227,8 @@ class _UserManagementPageState extends State<UserManagementPage>
                   },
                   onUpdate: (id, nama, alamat, noTelp) async {
                     try {
-                      await CrudServices.updatePelanggan(id, nama, alamat, noTelp);
+                      await CrudServices.updatePelanggan(
+                          id, nama, alamat, noTelp);
                       _resetPelangganForm();
                       await _loadInitialData();
                     } catch (e) {

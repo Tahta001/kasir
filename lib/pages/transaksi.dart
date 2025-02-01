@@ -1,34 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Model for transaction details
-class TransactionDetail {
-  final int detailId;
-  final int produkId;
-  final int jumlahProduk;
-  final double subtotal;
-  final int penjualanId;
+// Model Produk
+class Product {
+  final int id;
+  final String name;
 
-  TransactionDetail({
-    required this.detailId,
-    required this.produkId,
-    required this.jumlahProduk,
-    required this.subtotal,
-    required this.penjualanId,
+  Product({
+    required this.id,
+    required this.name,
   });
 
-  factory TransactionDetail.fromJson(Map<String, dynamic> json) {
-    return TransactionDetail(
-      detailId: json['detailid'] as int,
-      produkId: json['produkid'] as int,
-      jumlahProduk: json['jumlahproduk'] as int,
-      subtotal: (json['subtotal'] as num).toDouble(),
-      penjualanId: json['penjualanid'] as int,
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['produkid'] as int,
+      name: json['namaproduk'] as String,
     );
   }
 }
 
-// Transaction model
+// Model Detail Transaksi
+class TransactionDetail {
+  final int detailId;
+  final int produkId;
+  final String? productName;
+  final int jumlahProduk;
+  final double subtotal;
+  final int penjualanId;
+  final double hargaSatuan;
+
+  TransactionDetail({
+    required this.detailId,
+    required this.produkId,
+    this.productName,
+    required this.jumlahProduk,
+    required this.subtotal,
+    required this.penjualanId,
+    required this.hargaSatuan,
+  });
+
+  factory TransactionDetail.fromJson(Map<String, dynamic> json) {
+    final double subtotal = (json['subtotal'] as num).toDouble();
+    final int jumlahProduk = json['jumlahproduk'] as int;
+
+    return TransactionDetail(
+      detailId: json['detailid'] as int,
+      produkId: json['produkid'] as int,
+      productName: json['produk']['namaproduk'] as String?,
+      jumlahProduk: jumlahProduk,
+      subtotal: subtotal,
+      penjualanId: json['penjualanid'] as int,
+      hargaSatuan: subtotal / jumlahProduk,
+    );
+  }
+}
+
+// Model Transaksi
 class Transaction {
   final int penjualanId;
   final String tanggalPenjualan;
@@ -90,8 +117,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     return '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}';
   }
 
-  // Fetch transactions
-  Future<List<Transaction>> _fetchTransactions() async {
+  Future<List<Transaction>> fetchTransactions() async {
     try {
       final response = await _supabase
           .from('penjualan')
@@ -101,12 +127,14 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       List<Transaction> transactions =
           (response as List).map((item) => Transaction.fromJson(item)).toList();
 
-      // Fetch details for each transaction
       for (var transaction in transactions) {
-        final detailsResponse = await _supabase
-            .from('detailpenjualan')
-            .select()
-            .eq('penjualanid', transaction.penjualanId);
+        final detailsResponse =
+            await _supabase.from('detailpenjualan').select('''
+              *,
+              produk (
+                namaproduk
+              )
+            ''').eq('penjualanid', transaction.penjualanId);
 
         transaction.details.addAll(
           (detailsResponse as List)
@@ -122,6 +150,54 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
+  Future<void> deleteTransaction(int penjualanId) async {
+    try {
+      // Hapus detail transaksi terlebih dahulu
+      await _supabase
+          .from('detailpenjualan')
+          .delete()
+          .eq('penjualanid', penjualanId);
+
+      // Kemudian hapus transaksi utama
+      await _supabase.from('penjualan').delete().eq('penjualanid', penjualanId);
+
+      setState(() {});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaksi berhasil dihapus')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error deleting transaction: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal menghapus transaksi')),
+        );
+      }
+    }
+  }
+
+  Future<bool?> showDeleteConfirmationDialog() async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi Hapus'),
+        content: const Text('Apakah Anda yakin ingin menghapus transaksi ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,7 +205,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         title: const Text('Riwayat Transaksi'),
       ),
       body: FutureBuilder<List<Transaction>>(
-        future: _fetchTransactions(),
+        future: fetchTransactions(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -153,13 +229,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'ID Pelanggan: ${transaction.pelangganId}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color.fromARGB(255, 0, 0, 0),
-                        ),
-                      ),
+                      Text('ID Pelanggan: ${transaction.pelangganId}'),
                       Text(
                           'Tanggal: ${formatDate(transaction.tanggalPenjualan)}'),
                       Text(
@@ -177,49 +247,52 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                           const Text(
                             'Detail Pesanan:',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                                fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           const SizedBox(height: 8),
                           ...transaction.details.map((detail) => Padding(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 4),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Produk #${detail.produkId}'),
-                                    Text('${detail.jumlahProduk}x'),
-                                    const SizedBox(width: 16),
                                     Text(
-                                      formatCurrency(detail.subtotal),
+                                      detail.productName ?? "Unknown",
                                       style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                          fontWeight: FontWeight.bold),
                                     ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                            '${formatCurrency(detail.hargaSatuan)} x ${detail.jumlahProduk}'),
+                                        Text(
+                                          formatCurrency(detail.subtotal),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(),
                                   ],
                                 ),
                               )),
-                          const Divider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Total',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              Text(
-                                formatCurrency(transaction.totalHarga),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              bool? confirmDelete =
+                                  await showDeleteConfirmationDialog();
+                              if (confirmDelete == true) {
+                                await deleteTransaction(
+                                    transaction.penjualanId);
+                              }
+                            },
+                            icon: const Icon(Icons.delete, color: Colors.white),
+                            label: const Text("Hapus Transaksi"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
                           ),
                         ],
                       ),

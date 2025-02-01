@@ -130,7 +130,7 @@ class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar( //appbar/judul
         title: const Text('Proses Pembayaran'),
       ),
       body: Column(
@@ -138,6 +138,7 @@ class _PaymentPageState extends State<PaymentPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: DropdownButton<int>(
+              //dropdown untuk memilih pelanggan
               isExpanded: true,
               value: _selectedCustomerId,
               hint: const Text('Pilih Pelanggan'),

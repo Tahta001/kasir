@@ -52,8 +52,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   value: 'admin', child: Text('Switch to admin')),
               const PopupMenuItem(
                   value: 'pegawai', child: Text('Switch to pegawai')),
-              const PopupMenuItem(
-                  value: 'pelanggan', child: Text('Switch to pelanggan')),
+              // const PopupMenuItem(
+              //     value: 'pelanggan', child: Text('Switch to pelanggan')),
             ],
           )
         : Container();
