@@ -1,6 +1,3 @@
-//digunakan untuk head bar halaman
-// ignore_for_file: prefer_const_constructors, use_super_parameters
-
 import 'package:flutter/material.dart';
 import 'package:pl2_kasir/pages/login.dart';
 
@@ -20,43 +17,32 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: const Color.fromARGB(255, 94, 120, 236),
-      title: Text( //digunakakn unutk judul halaman yg berbeda per lore
-        currentRole == 'admin'
-            ? 'Admin Dashboard'
-            : currentRole == 'pegawai'
-                ? 'Pegawai Dashboard'
-                : 'Pelanggan Dashboard',
+      title: Text(
+        '${currentRole.substring(0, 1).toUpperCase()}${currentRole.substring(1)} Dashboard',
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
       actions: [
-        _buildRoleSwitcher(),
+        if (userRole == 'admin')
+          PopupMenuButton<String>(
+            onSelected: onRoleSwitch,
+            icon: const Icon(Icons.swap_horiz, color: Colors.white),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'admin', child: Text('Switch to Admin')),
+              PopupMenuItem(value: 'pegawai', child: Text('Switch to Pegawai')),
+            ],
+          ),
         IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => LoginPage()),
-            );
-          },
+          icon: const Icon(Icons.logout, color: Colors.white),
+          onPressed: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          ),
         ),
       ],
     );
-  }
-
-  Widget _buildRoleSwitcher() { // digunakan agar admin bisa masuk ke halaman pegawai dan pelanggan
-    return userRole == 'admin'
-        ? PopupMenuButton<String>(
-            onSelected: onRoleSwitch,
-            icon: const Icon(Icons.swap_horiz),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                  value: 'admin', child: Text('Switch to admin')),
-              const PopupMenuItem(
-                  value: 'pegawai', child: Text('Switch to pegawai')),
-              // const PopupMenuItem(
-              //     value: 'pelanggan', child: Text('Switch to pelanggan')),
-            ],
-          )
-        : Container();
   }
 
   @override

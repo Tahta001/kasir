@@ -33,10 +33,8 @@ class PegawaiList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      //membungkus seluruh tambilan column
       children: [
         Padding(
-          //unutk atas yaitu form imput
           padding: const EdgeInsets.all(16.0),
           child: Form(
             key: formKey,
@@ -46,6 +44,9 @@ class PegawaiList extends StatelessWidget {
                   controller: usernameController,
                   decoration: InputDecoration(
                     labelText: isEditing ? 'Edit Username' : 'Username',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey[100],
                   ),
                   validator: (value) =>
                       value!.isEmpty ? 'Username tidak boleh kosong' : null,
@@ -57,6 +58,9 @@ class PegawaiList extends StatelessWidget {
                     labelText: isEditing
                         ? 'Edit Password (kosongkan jika tidak diubah)'
                         : 'Password',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey[100],
                   ),
                   obscureText: true,
                   validator: (value) => !isEditing && value!.isEmpty
@@ -82,8 +86,19 @@ class PegawaiList extends StatelessWidget {
                             }
                           }
                         },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Tambah Pegawai'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromRGBO(69, 220, 74, 1),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        label: const Text(
+                          'Tambah Pegawai',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       )
                     else ...[
                       ElevatedButton.icon(
@@ -104,14 +119,36 @@ class PegawaiList extends StatelessWidget {
                             }
                           }
                         },
-                        icon: const Icon(Icons.save),
-                        label: const Text('Simpan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.save, color: Colors.white),
+                        label: const Text(
+                          'Simpan',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      TextButton.icon(
+                      ElevatedButton.icon(
                         onPressed: onCancelEdit,
-                        icon: const Icon(Icons.cancel),
-                        label: const Text('Batal'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.cancel, color: Colors.white),
+                        label: const Text(
+                          'Batal',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
                     ],
                   ],
@@ -120,45 +157,58 @@ class PegawaiList extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(//bafian bawa yaitu list pegawi
+        Expanded(
           child: ListView.builder(
             itemCount: pegawaiList.length,
             itemBuilder: (context, index) {
               final pegawai = pegawaiList[index];
-              return ListTile(
-                title: Text(pegawai['username']),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () async {
-                        try {
-                          await onStartEdit(pegawai);
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
-                            );
+              return Card(
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: ListTile(
+                  title: Text(
+                    pegawai['username'],
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.blue[100],
+                        ),
+                        onPressed: () async {
+                          try {
+                            await onStartEdit(pegawai);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
                           }
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        try {
-                          await onDelete(pegawai['userid']);
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
-                            );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.red[100],
+                        ),
+                        onPressed: () async {
+                          try {
+                            await onDelete(pegawai['userid']);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
                           }
-                        }
-                      },
-                    ),
-                  ],
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -213,6 +263,9 @@ class PelangganList extends StatelessWidget {
                   controller: namaController,
                   decoration: InputDecoration(
                     labelText: isEditing ? 'Edit Nama' : 'Nama',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey[100],
                   ),
                   validator: (value) =>
                       value!.isEmpty ? 'Nama tidak boleh kosong' : null,
@@ -222,6 +275,9 @@ class PelangganList extends StatelessWidget {
                   controller: alamatController,
                   decoration: InputDecoration(
                     labelText: isEditing ? 'Edit Alamat' : 'Alamat',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey[100],
                   ),
                   validator: (value) =>
                       value!.isEmpty ? 'Alamat tidak boleh kosong' : null,
@@ -231,6 +287,9 @@ class PelangganList extends StatelessWidget {
                   controller: noTelpController,
                   decoration: InputDecoration(
                     labelText: isEditing ? 'Edit No Telepon' : 'No Telepon',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey[100],
                   ),
                   validator: (value) =>
                       value!.isEmpty ? 'No Telepon tidak boleh kosong' : null,
@@ -254,8 +313,19 @@ class PelangganList extends StatelessWidget {
                             }
                           }
                         },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Tambah Pelanggan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromRGBO(69, 220, 74, 1),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        label: const Text(
+                          'Tambah Pelanggan',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       )
                     else ...[
                       ElevatedButton.icon(
@@ -277,14 +347,36 @@ class PelangganList extends StatelessWidget {
                             }
                           }
                         },
-                        icon: const Icon(Icons.save),
-                        label: const Text('Simpan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.save, color: Colors.white),
+                        label: const Text(
+                          'Simpan',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      TextButton.icon(
+                      ElevatedButton.icon(
                         onPressed: onCancelEdit,
-                        icon: const Icon(Icons.cancel),
-                        label: const Text('Batal'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.cancel, color: Colors.white),
+                        label: const Text(
+                          'Batal',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
                     ],
                   ],
@@ -298,47 +390,60 @@ class PelangganList extends StatelessWidget {
             itemCount: pelangganList.length,
             itemBuilder: (context, index) {
               final pelanggan = pelangganList[index];
-              return ListTile(
-                title: Text(pelanggan['nama']),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Alamat: ${pelanggan['alamat']}'),
-                    Text('No Telp: ${pelanggan['no_tlp']}'),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () async {
-                        try {
-                          await onStartEdit(pelanggan);
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
-                            );
+              return Card(
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: ListTile(
+                  title: Text(
+                    pelanggan['nama'],
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Alamat: ${pelanggan['alamat']}'),
+                      Text('No Telp: ${pelanggan['no_tlp']}'),
+                    ],
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.blue[100],
+                        ),
+                        onPressed: () async {
+                          try {
+                            await onStartEdit(pelanggan);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
                           }
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        try {
-                          await onDelete(pelanggan['pelangganid']);
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
-                            );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.red[100],
+                        ),
+                        onPressed: () async {
+                          try {
+                            await onDelete(pelanggan['pelangganid']);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
                           }
-                        }
-                      },
-                    ),
-                  ],
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

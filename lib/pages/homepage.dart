@@ -93,8 +93,17 @@ class _HomePageState extends State<HomePage> {
     if (_currentRole == 'admin' || _currentRole == 'pegawai') {
       return Column(
         children: [
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Produk List',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           Padding(
-            // opsional
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               onChanged: _filterProducts,
@@ -122,6 +131,16 @@ class _HomePageState extends State<HomePage> {
     } else if (_currentRole == 'pelanggan') {
       return Column(
         children: [
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Produk List',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -148,42 +167,46 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _handleNavigation(int index) {
+    if (index == _currentIndex) {
+      return; // Mencegah navigasi ke halaman yang sama
+    }
+
     setState(() => _currentIndex = index);
 
-    if (_currentRole == 'admin' && index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const UserManagementPage(),
-        ),
-      );
+    if (_currentRole == 'admin') {
+      if (index == 1) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const UserManagementPage(),
+          ),
+        ).then((_) =>
+            setState(() => _currentIndex = 0)); // Reset ke home saat kembali
+      } else if (index == 2) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TransactionHistoryPage(),
+          ),
+        ).then((_) => setState(() => _currentIndex = 0));
+      }
+    } else if (_currentRole == 'pegawai') {
+      if (index == 1) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentPage(),
+          ),
+        ).then((_) => setState(() => _currentIndex = 0));
+      } else if (index == 2) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TransactionHistoryPage(),
+          ),
+        ).then((_) => setState(() => _currentIndex = 0));
+      }
     }
-    if (_currentRole == 'admin' && index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const TransactionHistoryPage(),
-        ),
-      );
-    }
-    if (_currentRole == 'pegawai' && index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentPage(),
-        ),
-      );
-    }
-    if (_currentRole == 'pegawai' && index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const TransactionHistoryPage(),
-        ),
-      );
-    }
-
-    // Tambahkan navigasi untuk menu lain sesuai kebutuhan
   }
 
   @override
@@ -214,7 +237,7 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: CustomBottomNav(
         currentRole: _currentRole,
         currentIndex: _currentIndex,
-        onTap: _handleNavigation, // Menggunakan fungsi _handleNavigation
+        onTap: _handleNavigation,
       ),
     );
   }

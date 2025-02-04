@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 
 class PaymentPage extends StatefulWidget {
   @override
@@ -59,11 +60,70 @@ class _PaymentPageState extends State<PaymentPage> {
         _cart.remove(produkId);
       }
 
-      _totalAmount = _cart.entries.fold(0.0, (sum, entry) {
-        final produk = _products.firstWhere((p) => p.produkId == entry.key);
-        return sum + (produk.harga * entry.value);
-      });
+      _calculateTotal();
     });
+  }
+
+  void _calculateTotal() {
+    _totalAmount = _cart.entries.fold(0.0, (sum, entry) {
+      final produk = _products.firstWhere((p) => p.produkId == entry.key);
+      return sum + (produk.harga * entry.value);
+    });
+  }
+
+  Future<void> _showReceiptDialog(int penjualanId, DateTime tanggal) async {
+    final customer =
+        _customers.firstWhere((c) => c.pelangganId == _selectedCustomerId);
+
+    // Calculate total and build items text
+    double total = 0;
+    String itemsText = '';
+    for (var entry in _cart.entries) {
+      final product = _products.firstWhere((p) => p.produkId == entry.key);
+      final subtotal = product.harga * entry.value;
+      total += subtotal; // Add to running total
+      itemsText +=
+          '${product.namaproduk} (${entry.value}x) - Rp${subtotal.toStringAsFixed(0)}\n';
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Detail Pembelian'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('No. Transaksi: #$penjualanId'),
+              const SizedBox(height: 8),
+              Text(
+                  'Tanggal: ${DateFormat('dd/MM/yyyy HH:mm').format(tanggal)}'),
+              Text('Nama Pembeli: ${customer.nama}'),
+              const Divider(),
+              const Text('Produk yang dibeli:'),
+              const SizedBox(height: 8),
+              Text(itemsText),
+              const Divider(),
+              Text(
+                'Total Pembayaran: Rp${total.toStringAsFixed(0)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.blue, // Warna latar belakang tombol
+              foregroundColor: Colors.white, // Warna teks tombol
+            ),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _processPayment() async {
@@ -82,11 +142,12 @@ class _PaymentPageState extends State<PaymentPage> {
     }
 
     try {
-      // Insert ke tabel `penjualan`
+      final now = DateTime.now();
+
       final penjualanResponse = await _supabase
           .from('penjualan')
           .insert({
-            'tanggalpenjualan': DateTime.now().toIso8601String(),
+            'tanggalpenjualan': now.toIso8601String(),
             'totalharga': _totalAmount,
             'pelangganid': _selectedCustomerId,
           })
@@ -94,7 +155,6 @@ class _PaymentPageState extends State<PaymentPage> {
           .single();
       final penjualanId = penjualanResponse['penjualanid'];
 
-      // Insert ke tabel `detailpenjualan`
       for (var entry in _cart.entries) {
         final produk = _products.firstWhere((p) => p.produkId == entry.key);
         await _supabase.from('detailpenjualan').insert({
@@ -104,13 +164,13 @@ class _PaymentPageState extends State<PaymentPage> {
           'subtotal': produk.harga * entry.value,
         });
 
-        // Kurangi stok produk
         await _supabase.from('produk').update({
           'stok': produk.stok - entry.value,
         }).eq('produkid', produk.produkId);
       }
 
-      // Reset keranjang
+      await _showReceiptDialog(penjualanId, now);
+
       setState(() {
         _cart.clear();
         _totalAmount = 0.0;
@@ -130,7 +190,7 @@ class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar( //appbar/judul
+      appBar: AppBar(
         title: const Text('Proses Pembayaran'),
       ),
       body: Column(
@@ -138,7 +198,6 @@ class _PaymentPageState extends State<PaymentPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: DropdownButton<int>(
-              //dropdown untuk memilih pelanggan
               isExpanded: true,
               value: _selectedCustomerId,
               hint: const Text('Pilih Pelanggan'),
@@ -161,13 +220,22 @@ class _PaymentPageState extends State<PaymentPage> {
               itemBuilder: (context, index) {
                 final produk = _products[index];
                 final jumlah = _cart[produk.produkId] ?? 0;
+                final subtotal = produk.harga * jumlah;
 
                 return Card(
                   margin: const EdgeInsets.all(8.0),
                   child: ListTile(
                     title: Text(produk.namaproduk),
-                    subtitle:
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text('Harga: Rp${produk.harga}, Stok: ${produk.stok}'),
+                        if (jumlah > 0)
+                          Text('Subtotal: Rp${subtotal.toStringAsFixed(0)}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -194,7 +262,7 @@ class _PaymentPageState extends State<PaymentPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Total: Rp$_totalAmount',
+              'Total: Rp${_totalAmount.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
@@ -211,7 +279,6 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 }
 
-// Model Produk
 class Product {
   final int produkId;
   final String namaproduk;
@@ -235,7 +302,6 @@ class Product {
   }
 }
 
-// Model Pelanggan
 class Customer {
   final int pelangganId;
   final String nama;

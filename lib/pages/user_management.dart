@@ -12,8 +12,7 @@ class UserManagementPage extends StatefulWidget {
 class _UserManagementPageState extends State<UserManagementPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final _pegawaiFormKey =
-      GlobalKey<FormState>(); // unutk validasi imput sebelum data dikirim
+  final _pegawaiFormKey = GlobalKey<FormState>();
   final _pegawaiUsernameController = TextEditingController();
   final _pegawaiPasswordController = TextEditingController();
   final _pelangganFormKey = GlobalKey<FormState>();
@@ -21,7 +20,7 @@ class _UserManagementPageState extends State<UserManagementPage>
   final _pelangganAlamatController = TextEditingController();
   final _pelangganNoTelpController = TextEditingController();
 
-  List<Map<String, dynamic>> _pegawaiList = []; //unutk menyimpan data yg dkirim(pegawai/pelanggan)
+  List<Map<String, dynamic>> _pegawaiList = [];
   List<Map<String, dynamic>> _pelangganList = [];
   bool _isLoading = false;
   bool _isPegawaiEditing = false;
@@ -45,6 +44,46 @@ class _UserManagementPageState extends State<UserManagementPage>
     _pelangganAlamatController.dispose();
     _pelangganNoTelpController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _showDeleteConfirmationDialog(
+      String title, String content) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(title),
+              content: Text(content),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Batal'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child:
+                      const Text('Hapus', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Future<bool> _isPegawaiDuplicate(String username) async {
+    return _pegawaiList.any((pegawai) =>
+        pegawai['username'].toLowerCase() == username.toLowerCase() &&
+        pegawai['userid'] != _editingPegawaiId);
+  }
+
+  Future<bool> _isPelangganDuplicate(
+      String nama, String alamat, String noTelp) async {
+    return _pelangganList.any((pelanggan) =>
+        pelanggan['nama'].toLowerCase() == nama.toLowerCase() &&
+        pelanggan['alamat'].toLowerCase() == alamat.toLowerCase() &&
+        pelanggan['no_tlp'] == noTelp &&
+        pelanggan['pelangganid'] != _editingPelangganId);
   }
 
   Future<void> _loadInitialData() async {
@@ -73,6 +112,20 @@ class _UserManagementPageState extends State<UserManagementPage>
 
   Future<void> _handlePegawaiAdd() async {
     try {
+      final isDuplicate =
+          await _isPegawaiDuplicate(_pegawaiUsernameController.text);
+
+      if (isDuplicate) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Username sudah digunakan. Silakan gunakan username lain.')),
+          );
+        }
+        return;
+      }
+
       await CrudServices.addPegawai(
         _pegawaiUsernameController.text,
         _pegawaiPasswordController.text,
@@ -92,6 +145,22 @@ class _UserManagementPageState extends State<UserManagementPage>
 
   Future<void> _handlePelangganAdd() async {
     try {
+      final isDuplicate = await _isPelangganDuplicate(
+          _pelangganNamaController.text,
+          _pelangganAlamatController.text,
+          _pelangganNoTelpController.text);
+
+      if (isDuplicate) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Data pelanggan sudah ada. Silakan periksa kembali data yang dimasukkan.')),
+          );
+        }
+        return;
+      }
+
       await CrudServices.addPelanggan(
         _pelangganNamaController.text,
         _pelangganAlamatController.text,
@@ -127,6 +196,108 @@ class _UserManagementPageState extends State<UserManagementPage>
       _pelangganAlamatController.clear();
       _pelangganNoTelpController.clear();
     });
+  }
+
+  Future<void> _handlePegawaiUpdate(
+      int id, String username, String password) async {
+    try {
+      final isDuplicate = await _isPegawaiDuplicate(username);
+
+      if (isDuplicate) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Username sudah digunakan. Silakan gunakan username lain.')),
+          );
+        }
+        return;
+      }
+
+      await CrudServices.updatePegawai(id, username, password);
+      _resetPegawaiForm();
+      await _loadInitialData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handlePelangganUpdate(
+      int id, String nama, String alamat, String noTelp) async {
+    try {
+      final isDuplicate = await _isPelangganDuplicate(nama, alamat, noTelp);
+
+      if (isDuplicate) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Data pelanggan sudah ada. Silakan periksa kembali data yang dimasukkan.')),
+          );
+        }
+        return;
+      }
+
+      await CrudServices.updatePelanggan(id, nama, alamat, noTelp);
+      _resetPelangganForm();
+      await _loadInitialData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handlePegawaiDelete(Map<String, dynamic> pegawai) async {
+    final willDelete = await _showDeleteConfirmationDialog('Hapus Pegawai',
+        'Apakah Anda yakin ingin menghapus pegawai "${pegawai['username']}"?');
+
+    if (willDelete) {
+      try {
+        await CrudServices.deletePegawai(pegawai['userid']);
+        await _loadInitialData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Pegawai berhasil dihapus')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${e.toString()}')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handlePelangganDelete(Map<String, dynamic> pelanggan) async {
+    final willDelete = await _showDeleteConfirmationDialog('Hapus Pelanggan',
+        'Apakah Anda yakin ingin menghapus pelanggan "${pelanggan['nama']}"?');
+
+    if (willDelete) {
+      try {
+        await CrudServices.deletePelanggan(pelanggan['pelangganid']);
+        await _loadInitialData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Pelanggan berhasil dihapus')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${e.toString()}')),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -165,30 +336,11 @@ class _UserManagementPageState extends State<UserManagementPage>
                     });
                   },
                   onDelete: (id) async {
-                    try {
-                      await CrudServices.deletePegawai(id);
-                      await _loadInitialData();
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}')),
-                        );
-                      }
-                    }
+                    final pegawai =
+                        _pegawaiList.firstWhere((p) => p['userid'] == id);
+                    await _handlePegawaiDelete(pegawai);
                   },
-                  onUpdate: (id, username, password) async {
-                    try {
-                      await CrudServices.updatePegawai(id, username, password);
-                      _resetPegawaiForm();
-                      await _loadInitialData();
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}')),
-                        );
-                      }
-                    }
-                  },
+                  onUpdate: _handlePegawaiUpdate,
                   onCancelEdit: _resetPegawaiForm,
                 ),
                 PelangganList(
@@ -214,31 +366,11 @@ class _UserManagementPageState extends State<UserManagementPage>
                     });
                   },
                   onDelete: (id) async {
-                    try {
-                      await CrudServices.deletePelanggan(id);
-                      await _loadInitialData();
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}')),
-                        );
-                      }
-                    }
+                    final pelanggan = _pelangganList
+                        .firstWhere((p) => p['pelangganid'] == id);
+                    await _handlePelangganDelete(pelanggan);
                   },
-                  onUpdate: (id, nama, alamat, noTelp) async {
-                    try {
-                      await CrudServices.updatePelanggan(
-                          id, nama, alamat, noTelp);
-                      _resetPelangganForm();
-                      await _loadInitialData();
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}')),
-                        );
-                      }
-                    }
-                  },
+                  onUpdate: _handlePelangganUpdate,
                   onCancelEdit: _resetPelangganForm,
                 ),
               ],

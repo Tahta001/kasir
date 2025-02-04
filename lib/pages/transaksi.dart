@@ -61,6 +61,7 @@ class Transaction {
   final String tanggalPenjualan;
   final double totalHarga;
   final int pelangganId;
+  final String? customerName; // Tambahan field untuk nama pelanggan
   final List<TransactionDetail> details;
   bool isExpanded;
 
@@ -69,6 +70,7 @@ class Transaction {
     required this.tanggalPenjualan,
     required this.totalHarga,
     required this.pelangganId,
+    this.customerName,
     this.details = const [],
     this.isExpanded = false,
   });
@@ -79,6 +81,8 @@ class Transaction {
       tanggalPenjualan: json['tanggalpenjualan'] as String,
       totalHarga: (json['totalharga'] as num).toDouble(),
       pelangganId: json['pelangganid'] as int,
+      customerName: json['pelanggan']['nama']
+          as String?, // Mengambil nama pelanggan dari relasi
       details: [],
     );
   }
@@ -119,10 +123,13 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   Future<List<Transaction>> fetchTransactions() async {
     try {
-      final response = await _supabase
-          .from('penjualan')
-          .select('*')
-          .order('penjualanid', ascending: false);
+      // Mengubah query untuk mengambil data pelanggan
+      final response = await _supabase.from('penjualan').select('''
+            *,
+            pelanggan (
+              nama
+            )
+          ''').order('penjualanid', ascending: false);
 
       List<Transaction> transactions =
           (response as List).map((item) => Transaction.fromJson(item)).toList();
@@ -229,7 +236,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('ID Pelanggan: ${transaction.pelangganId}'),
+                      Text(
+                          'Pelanggan: #${transaction.pelangganId} ${(transaction.customerName ?? "Unknown")}', // gunakan toUpperCase() jika ingin kapital semua
+                          style: const TextStyle(fontWeight: FontWeight.w500)),
                       Text(
                           'Tanggal: ${formatDate(transaction.tanggalPenjualan)}'),
                       Text(
@@ -289,9 +298,16 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                               }
                             },
                             icon: const Icon(Icons.delete, color: Colors.white),
-                            label: const Text("Hapus Transaksi"),
+                            label: const Text(
+                              "Hapus Transaksi",
+                              style: TextStyle(
+                                  color: Colors.white), // Warna teks putih
+                            ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
+                              backgroundColor:
+                                  Colors.red, // Warna latar belakang tombol
+                              foregroundColor:
+                                  Colors.white, // Warna ikon dan teks
                             ),
                           ),
                         ],
